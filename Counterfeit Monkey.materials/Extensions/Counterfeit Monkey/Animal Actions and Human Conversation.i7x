@@ -82,7 +82,7 @@ After an actor exiting when the container exited from is the synthesizer:
 
 The exit attempt rules are an object-based rulebook.
 
-To fidget is a verb. To pace is a verb.
+To fidget is a verb. To pace is a verb. To comment is a verb.
 
 [An exit attempt rule for a person (called exiter):
 	do nothing.]
@@ -573,7 +573,7 @@ whether the Britishizing goggles seem interesting is a demonstration quip.
 whether the Origin Paste seems interesting is a demonstration quip.
 	[The mentions-list is {origin paste}.]
 	The comment is "[demonstration of origin paste]".
-	The reply is "'[one of]Smells[or]Looks[at random] like soap,' [the current interlocutor] [comment].".
+	The reply is "'[one of]Smells[or]Looks[at random] like soap,' [the current interlocutor] [adapt the verb comment].".
 	It is repeatable.
 	It is background-information.
 

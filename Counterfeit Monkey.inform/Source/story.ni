@@ -388,6 +388,9 @@ Include Act V Atlantida Herself by Counterfeit Monkey.
 
 Include Map Declarations by Counterfeit Monkey.
 
+Include Semantic Mapping by Dan Fabulich.
+Include Semantic Map Geometry by Dan Fabulich.
+
 [	•	Book 6 - Map Declarations
 		•	Chapter 1 - Main Map
 		•	Chapter 2 - Inside the Bureau

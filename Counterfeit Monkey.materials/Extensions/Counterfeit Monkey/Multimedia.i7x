@@ -18,7 +18,7 @@ Chapter - Map documents (for interpreters with gestalt_Map)
  map overlays (compass overlays carry link ids).]
 
 Map-document-enabled is a truth state that varies.
-Map-document-enabled is initially true.
+Map-document-enabled is initially false.
 
 Map look link id is a number that varies.
 Map look link id is initially 1.
@@ -34,39 +34,12 @@ To determine map-document compass coordinates with height (H - a number) compass
 
 To present the counterfeit monkey map with flags (flags - a number):
 	unless glk mapping is supported, stop;
-	unless the location has a local map figure, stop;
-	let map-fig be the local map of the location;
-	let map-w be the image width of map-fig;
-	let map-h be the image height of map-fig;
-	if map-w is 0, now map-w is 722;
-	if map-h is 0, now map-h is 860;
-	let map-compass-width be map-w / 4;
-	if map-compass-width > 120, now map-compass-width is 120;
-	if map-compass-width < 60, now map-compass-width is 60;
-	let map-grid-size be map-compass-width / 3;
-	determine map-document compass coordinates with height map-h compass width map-compass-width grid size map-grid-size;
-	present map image map-fig with flags (flags bit-or the glk bit of map-has-focus) background color 31455 focusing on left 0 top 0 width map-w height map-h;
-	[Black pad above the map; canvas bgcolor covers below/sides beyond the extends.]
-	let map-pad-w be map-w * 3;
-	let map-pad-h be 10000;
-	fill map rect color 0 at left (0 - map-w) top (0 - map-pad-h) width map-pad-w height map-pad-h z-index 0;
-	let left-fig be Figure of padding left;
-	let right-fig be Figure of padding right;
-	if the location is nautical:
-		now left-fig is Figure of nautical padding left;
-		now right-fig is Figure of nautical padding right;
-	overlay left-fig at left (0 - map-w) top 0 width map-w height map-h z-index 1;
-	overlay right-fig at left map-w top 0 width map-w height map-h z-index 1;
-	overlay figure of center-squiggle at left (x-coordinate of north) top (y-coordinate of west) width map-grid-size height map-grid-size z-index 10 link id map look link id labeled "look";
-	repeat with way running through directions:
-		if way is inside or way is outside, next;
-		let R be the room way from the location;
-		if R is nothing, next;
-		let pic be the visited compass figure of way;
-		if R is unvisited:
-			now pic is the unvisited compass figure of way;
-		overlay pic at left (x-coordinate of way) top (y-coordinate of way) width map-grid-size height map-grid-size z-index 11 linked to way labeled "[way]";
-	request map events.
+	[now the rasterized PNG map is replaced by the table-driven Semantic Mapping SVG.]
+	now semantic map enabled is true;
+	if flags is 4:
+		refresh the semantic map with { map-user-requested-show };
+	else:
+		refresh the semantic map with { map-suggest-show }.
 
 To decide whether the location has a local map figure:
 	(- ( GProperty(OBJECT_TY, real_location, (+ local map +) ) ~= 0 ) -).
@@ -82,9 +55,9 @@ A map hyperlink command rule for a number (called linkid) (this is the counterfe
 
 A map user hide rule (this is the counterfeit monkey map user hide rule):
 	now map-document-enabled is false;
+	now semantic map enabled is false;
 	set graphics disabled flag;
 	cancel map events;
-	say "[first custom style][bracket]The map is now disabled. Type MAP ON to turn it back on, or just MAP to show it.[close bracket][roman type][paragraph break]".
 
 
 Chapter - The graphics window

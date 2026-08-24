@@ -254,7 +254,7 @@ To present map SVG (svg - a text) with (flaglist - a list of map flags) focusing
 Section - Present SVG
 
 Include (-
-Array glk_map_svg_buf -> 65536;
+Array glk_map_svg_buf -> 262144;
 
 [ GlkMapPresentSVGText txt flags bgcolor fl ft fw fh
   cp pk n i c len;
@@ -262,7 +262,7 @@ Array glk_map_svg_buf -> 65536;
   cp = txt-->0;
   pk = TEXT_TY_Temporarily_Transmute(txt);
   n = TEXT_TY_CharacterLength(txt);
-  if (n > 65535) n = 65535;
+  if (n > 262143) n = 262143;
   for (i = 0: i < n: i++) {
     c = BlkValueRead(txt, i);
     if (c < 0 || c > 255) c = '?';

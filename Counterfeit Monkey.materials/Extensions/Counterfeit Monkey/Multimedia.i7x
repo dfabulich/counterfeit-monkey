@@ -17,9 +17,6 @@ Chapter - Map documents (for interpreters with gestalt_Map)
  map present-image; side extends and the compass are
  map overlays (compass overlays carry link ids).]
 
-Map-document-enabled is a truth state that varies.
-Map-document-enabled is initially false.
-
 Map look link id is a number that varies.
 Map look link id is initially 1.
 
@@ -32,17 +29,6 @@ To decide which figure-name is the unvisited compass figure of (way - a directio
 To determine map-document compass coordinates with height (H - a number) compass width (CW - a number) grid size (G - a number):
 	(- DetermineCompassCoordinates({H}, {CW}, {G}); -).
 
-To present the counterfeit monkey map:
-	unless glk mapping is supported, stop;
-	[now the rasterized PNG map is replaced by the table-driven Automap SVG.]
-	now automap enabled is true;
-	now automap hyperlinks enabled is false;
-	refresh the automap.
-
-To present the counterfeit monkey map at user request:
-	present the counterfeit monkey map;
-	show the map at user request.
-
 To decide whether the location has a local map figure:
 	(- ( GProperty(OBJECT_TY, real_location, (+ local map +) ) ~= 0 ) -).
 
@@ -54,13 +40,6 @@ A map hyperlink command rule for a number (called linkid) (this is the counterfe
 		if the object number of D is linkid:
 			now the glulx replacement command is "[printed name of D]";
 			rule succeeds.
-
-A map user hide rule (this is the counterfeit monkey map user hide rule):
-	now map-document-enabled is false;
-	now automap enabled is false;
-	set graphics disabled flag;
-	cancel map events;
-
 
 Chapter - The graphics window
 
@@ -81,11 +60,6 @@ Before refreshing the graphics window (this is the adjust the graphics window to
 The measuring window is a graphics g-window spawned by the main window.
 The position of the measuring window is g-placebelow.
 The measurement of the measuring window is 0.
-
-When play begins (this is the disable automap room hyperlinks rule):
-	now automap hyperlinks enabled is false;
-	[Automap defaults to enabled; defer until identification / graphics preference.]
-	now automap enabled is false.
 
 When play begins (this is the open the measuring window rule):
 	if glulx graphics is supported:
@@ -116,10 +90,9 @@ To adjust width of the graphics window:
 When identification ends (this is the open the graphics window rule):
 	if glk mapping is supported:
 		unless graphics is disabled:
-			now map-document-enabled is true;
-			present the counterfeit monkey map;
+			show the map at user request;
 		else:
-			now map-document-enabled is false;
+			now automap enabled is false;
 	otherwise if glulx graphics is supported:
 		let main-width be the width of the main window;
 		let measure-width be the width of the measuring window;
@@ -259,10 +232,7 @@ To clear compass graphlinks:
 	clear the graphlink identified as "goU";
 
 Report looking (this is the update compass after looking rule):
-	if glk mapping is supported:
-		if map-document-enabled is true:
-			present the counterfeit monkey map;
-	otherwise:
+	unless glk mapping is supported:
 		redraw the map and compass.
 
 [We want the compass to stay down in a corner of the screen and not to scale up too huge if the screen is resized. One of the irritating things about Glulx window management is that it's impossible to force an aspect ratio on the player, so I have no idea whether they're going to go tall-and-skinny or short-and-wide. Testers playing in full-screen mode sometimes found that the compass got way too large and encroached on the upper part of the map if I just set the compass to be one quarter the width of the window.]
@@ -281,13 +251,11 @@ To decide what number is grid-margin:
 	decide on grid-size / 2.
 
 This is the compass-drawing rule:
-	if glk mapping is supported:
-		if map-document-enabled is true:
-			present the counterfeit monkey map;
-	otherwise if the graphics window is g-present:
-		clear compass graphlinks; [We need to reset the graphlinks every time the player resizes the window, because if the height of the screen changes, the compass may move vertically.]
-		establish compass graphlinks;
-		redraw the map and compass;
+	unless glk mapping is supported:
+		if the graphics window is g-present:
+			clear compass graphlinks; [We need to reset the graphlinks every time the player resizes the window, because if the height of the screen changes, the compass may move vertically.]
+			establish compass graphlinks;
+			redraw the map and compass;
 
 [Layer the image: a black background to fill in the top of the screen; blue for the bottom half so that if the map is too small, it will still look blue at the edges; then the map itself, proportionally scaled as large as it can reasonably be given the window dimensions; then the compass, built from the current circumstances.
 
@@ -296,20 +264,18 @@ In theory, it would have been possible to make the map images carry the compass 
 Figure of background colour is the file "map-background-colour.png".
 
 To redraw the map and compass:
-	if glk mapping is supported:
-		if map-document-enabled is true:
-			present the counterfeit monkey map;
-	otherwise if the graphics window is g-present:
-		let total height be height of the graphics window;
-		let scaled height be (ideal-width / map-ratio) to the nearest whole number;
-		draw the local map of the location in graphics window at x 0 and y ((total height - scaled height) / 2) scaled to width ideal-width and height scaled height;
-		[ Draw the blue background below the map and add a pixel to the height to ensure that odd heights don't leave a 1 pixel black line ]
-		let padding height be (total height - scaled height) / 2 + 1;
-		draw figure of background colour in graphics window at x 0 and y (((total height - scaled height) / 2) + scaled height) scaled to width ideal-width and height padding height;
-		[ Draw a black square at the top to cover any artifacts left over after changing height ]
-		draw a rectangle of color "$000000" in graphics window at x 0 and y 0 of width ideal-width and height (total height - scaled height) / 2;
-		determine compass coordinates with window height total height;
-		draw compass.
+	unless glk mapping is supported:
+		if the graphics window is g-present:
+			let total height be height of the graphics window;
+			let scaled height be (ideal-width / map-ratio) to the nearest whole number;
+			draw the local map of the location in graphics window at x 0 and y ((total height - scaled height) / 2) scaled to width ideal-width and height scaled height;
+			[ Draw the blue background below the map and add a pixel to the height to ensure that odd heights don't leave a 1 pixel black line ]
+			let padding height be (total height - scaled height) / 2 + 1;
+			draw figure of background colour in graphics window at x 0 and y (((total height - scaled height) / 2) + scaled height) scaled to width ideal-width and height padding height;
+			[ Draw a black square at the top to cover any artifacts left over after changing height ]
+			draw a rectangle of color "$000000" in graphics window at x 0 and y 0 of width ideal-width and height (total height - scaled height) / 2;
+			determine compass coordinates with window height total height;
+			draw compass.
 
 
 To determine compass coordinates with window height (height - a number):
@@ -757,9 +723,11 @@ Understand "map" as big-map-showing. Big-map-showing is an action out of world.
 
 Carry out big-map-showing:
 	if glk mapping is supported:
-		now map-document-enabled is true;
+		now automap enabled is true;
 		unset graphics disabled flag;
-		present the counterfeit monkey map at user request;
+		mark the automap full rebuild needed because "map-cmd";
+		refresh the automap;
+		show the map at user request;
 		now seen-map is true;
 		say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]" instead;
 	unless glulx graphics is supported:
@@ -847,12 +815,14 @@ To decide whether graphics is disabled:
 
 Carry out enabling graphics:
 	if glk mapping is supported:
-		if map-document-enabled is true:
+		if automap enabled is true and the map is visible:
 			say "[first custom style][bracket]The map is already enabled.[close bracket][roman type][paragraph break]";
 		otherwise:
-			now map-document-enabled is true;
+			now automap enabled is true;
 			unset graphics disabled flag;
-			present the counterfeit monkey map at user request;
+			mark the automap full rebuild needed because "map-on";
+			refresh the automap;
+			show the map at user request;
 			say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]";
 	otherwise unless glulx graphics is supported:
 		say "[first custom style][bracket]This interpreter does not support displaying graphics.[close bracket][roman type][paragraph break]" instead;
@@ -872,8 +842,8 @@ Understand "map off" or "graphics off" or "text only" or "text mode" as disablin
 Carry out disabling graphics:
 	if glk mapping is supported:
 		add the teach disabling graphics rule to the completed instruction list, if absent;
-		if map-document-enabled is true:
-			now map-document-enabled is false;
+		if automap enabled is true:
+			now automap enabled is false;
 			set graphics disabled flag;
 			close the map;
 			cancel map events;
@@ -907,13 +877,7 @@ Carry out revealing the automap:
 			now R is map-named;
 			increase N by 1;
 	mark the automap full rebuild needed because "reveal-map";
-	if glk mapping is supported:
-		now automap enabled is true;
-		if map-document-enabled is true:
-			present the counterfeit monkey map;
-		else:
-			now map-document-enabled is true;
-			present the counterfeit monkey map at user request;
+	refresh the automap;
 	say "[bracket]Marked [N] map rooms as seen.[close bracket][line break]".
 
 [Galley is forbidden, so GO TO GALLEY will not parse as approaching.]
@@ -928,7 +892,8 @@ Carry out warping to the galley:
 	if the player does not enclose the backpack:
 		now the player carries the backpack;
 	move the player to the Galley, without printing a room description;
-	try looking.
+	try looking;
+	refresh the automap.
 
 
 Chapter 2 - Sounds

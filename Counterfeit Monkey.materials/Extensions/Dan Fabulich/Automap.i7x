@@ -29,7 +29,7 @@ Automap scale is a number that varies. Automap scale is 20.
 
 Automap enabled is a truth state that varies. Automap enabled is initially true.
 
-Automap hyperlinks enabled is a truth state that varies. Automap hyperlinks enabled is initially true.
+Automap hyperlinks enabled is a truth state that varies. Automap hyperlinks enabled is initially false.
 
 [If a table of geometry is present, it takes precedence over any per-room
 map x/map y/map width/map height declarations.]

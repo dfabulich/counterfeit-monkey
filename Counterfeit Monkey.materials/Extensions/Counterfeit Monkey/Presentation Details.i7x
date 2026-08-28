@@ -816,8 +816,7 @@ To say post-restore routine:
 			[Do not open the Flexible Windows graphics pane; Glk Mapping owns the map.]
 			if the graphics window is g-present:
 				close the graphics window;
-			now map-document-enabled is true;
-			present the counterfeit monkey map; [bare present]
+			show the map at user request;
 		else if glulx graphics is supported:
 			now current graphics drawing rule is the compass-drawing rule;
 			unless the measuring window is g-present:
@@ -827,7 +826,6 @@ To say post-restore routine:
 			start looking for graphlinks;
 	otherwise:
 		if glk mapping is supported:
-			now map-document-enabled is false;
 			now automap enabled is false;
 			cancel map events;
 			close the map;

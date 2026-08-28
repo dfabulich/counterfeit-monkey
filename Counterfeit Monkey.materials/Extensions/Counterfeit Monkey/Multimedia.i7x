@@ -32,7 +32,7 @@ To decide which figure-name is the unvisited compass figure of (way - a directio
 To determine map-document compass coordinates with height (H - a number) compass width (CW - a number) grid size (G - a number):
 	(- DetermineCompassCoordinates({H}, {CW}, {G}); -).
 
-To present the counterfeit monkey map with flags (flags - a number):
+To present the counterfeit monkey map:
 	unless glk mapping is supported, stop;
 	unless the location has a local map figure, stop;
 	let map-fig be the local map of the location;
@@ -45,7 +45,7 @@ To present the counterfeit monkey map with flags (flags - a number):
 	if map-compass-width < 60, now map-compass-width is 60;
 	let map-grid-size be map-compass-width / 3;
 	determine map-document compass coordinates with height map-h compass width map-compass-width grid size map-grid-size;
-	present map image map-fig with flags (flags bit-or the glk bit of map-has-focus) background color 31455 focusing on left 0 top 0 width map-w height map-h;
+	present map image map-fig background color 31455 focusing on left 0 top 0 width map-w height map-h;
 	[Black pad above the map; canvas bgcolor covers below/sides beyond the extends.]
 	let map-pad-w be map-w * 3;
 	let map-pad-h be 10000;
@@ -137,7 +137,8 @@ When identification ends (this is the open the graphics window rule):
 	if glk mapping is supported:
 		unless graphics is disabled:
 			now map-document-enabled is true;
-			present the counterfeit monkey map with flags 4; [mapflag_UserRequestedShow]
+			present the counterfeit monkey map;
+			show the map at user request;
 		else:
 			now map-document-enabled is false;
 	otherwise if glulx graphics is supported:
@@ -281,7 +282,7 @@ To clear compass graphlinks:
 Report looking (this is the update compass after looking rule):
 	if glk mapping is supported:
 		if map-document-enabled is true:
-			present the counterfeit monkey map with flags 2; [mapflag_SuggestShow]
+			present the counterfeit monkey map;
 	otherwise:
 		redraw the map and compass.
 
@@ -303,7 +304,7 @@ To decide what number is grid-margin:
 This is the compass-drawing rule:
 	if glk mapping is supported:
 		if map-document-enabled is true:
-			present the counterfeit monkey map with flags 2; [mapflag_SuggestShow]
+			present the counterfeit monkey map;
 	otherwise if the graphics window is g-present:
 		clear compass graphlinks; [We need to reset the graphlinks every time the player resizes the window, because if the height of the screen changes, the compass may move vertically.]
 		establish compass graphlinks;
@@ -318,7 +319,7 @@ Figure of background colour is the file "map-background-colour.png".
 To redraw the map and compass:
 	if glk mapping is supported:
 		if map-document-enabled is true:
-			present the counterfeit monkey map with flags 2; [mapflag_SuggestShow]
+			present the counterfeit monkey map;
 	otherwise if the graphics window is g-present:
 		let total height be height of the graphics window;
 		let scaled height be (ideal-width / map-ratio) to the nearest whole number;
@@ -779,7 +780,8 @@ Carry out big-map-showing:
 	if glk mapping is supported:
 		now map-document-enabled is true;
 		unset graphics disabled flag;
-		present the counterfeit monkey map with flags 4; [mapflag_UserRequestedShow]
+		present the counterfeit monkey map;
+		show the map at user request;
 		now seen-map is true;
 		say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]" instead;
 	unless glulx graphics is supported:
@@ -872,7 +874,8 @@ Carry out enabling graphics:
 		otherwise:
 			now map-document-enabled is true;
 			unset graphics disabled flag;
-			present the counterfeit monkey map with flags 4; [mapflag_UserRequestedShow]
+			present the counterfeit monkey map;
+			show the map at user request;
 			say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]";
 	otherwise unless glulx graphics is supported:
 		say "[first custom style][bracket]This interpreter does not support displaying graphics.[close bracket][roman type][paragraph break]" instead;

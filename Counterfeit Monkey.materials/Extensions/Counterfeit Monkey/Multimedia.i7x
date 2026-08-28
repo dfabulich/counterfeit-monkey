@@ -32,14 +32,16 @@ To decide which figure-name is the unvisited compass figure of (way - a directio
 To determine map-document compass coordinates with height (H - a number) compass width (CW - a number) grid size (G - a number):
 	(- DetermineCompassCoordinates({H}, {CW}, {G}); -).
 
-To present the counterfeit monkey map with flags (flags - a number):
+To present the counterfeit monkey map:
 	unless glk mapping is supported, stop;
-	[now the rasterized PNG map is replaced by the table-driven Semantic Mapping SVG.]
-	now semantic map enabled is true;
-	if flags is 4:
-		refresh the semantic map with { map-user-requested-show };
-	else:
-		refresh the semantic map with { map-suggest-show }.
+	[now the rasterized PNG map is replaced by the table-driven Automap SVG.]
+	now automap enabled is true;
+	now automap hyperlinks enabled is false;
+	refresh the automap.
+
+To present the counterfeit monkey map at user request:
+	present the counterfeit monkey map;
+	show the map at user request.
 
 To decide whether the location has a local map figure:
 	(- ( GProperty(OBJECT_TY, real_location, (+ local map +) ) ~= 0 ) -).
@@ -55,7 +57,7 @@ A map hyperlink command rule for a number (called linkid) (this is the counterfe
 
 A map user hide rule (this is the counterfeit monkey map user hide rule):
 	now map-document-enabled is false;
-	now semantic map enabled is false;
+	now automap enabled is false;
 	set graphics disabled flag;
 	cancel map events;
 
@@ -79,6 +81,11 @@ Before refreshing the graphics window (this is the adjust the graphics window to
 The measuring window is a graphics g-window spawned by the main window.
 The position of the measuring window is g-placebelow.
 The measurement of the measuring window is 0.
+
+When play begins (this is the disable automap room hyperlinks rule):
+	now automap hyperlinks enabled is false;
+	[Automap defaults to enabled; defer until identification / graphics preference.]
+	now automap enabled is false.
 
 When play begins (this is the open the measuring window rule):
 	if glulx graphics is supported:
@@ -110,7 +117,7 @@ When identification ends (this is the open the graphics window rule):
 	if glk mapping is supported:
 		unless graphics is disabled:
 			now map-document-enabled is true;
-			present the counterfeit monkey map with flags 4; [mapflag_UserRequestedShow]
+			present the counterfeit monkey map;
 		else:
 			now map-document-enabled is false;
 	otherwise if glulx graphics is supported:
@@ -254,7 +261,7 @@ To clear compass graphlinks:
 Report looking (this is the update compass after looking rule):
 	if glk mapping is supported:
 		if map-document-enabled is true:
-			present the counterfeit monkey map with flags 2; [mapflag_SuggestShow]
+			present the counterfeit monkey map;
 	otherwise:
 		redraw the map and compass.
 
@@ -276,7 +283,7 @@ To decide what number is grid-margin:
 This is the compass-drawing rule:
 	if glk mapping is supported:
 		if map-document-enabled is true:
-			present the counterfeit monkey map with flags 2; [mapflag_SuggestShow]
+			present the counterfeit monkey map;
 	otherwise if the graphics window is g-present:
 		clear compass graphlinks; [We need to reset the graphlinks every time the player resizes the window, because if the height of the screen changes, the compass may move vertically.]
 		establish compass graphlinks;
@@ -291,7 +298,7 @@ Figure of background colour is the file "map-background-colour.png".
 To redraw the map and compass:
 	if glk mapping is supported:
 		if map-document-enabled is true:
-			present the counterfeit monkey map with flags 2; [mapflag_SuggestShow]
+			present the counterfeit monkey map;
 	otherwise if the graphics window is g-present:
 		let total height be height of the graphics window;
 		let scaled height be (ideal-width / map-ratio) to the nearest whole number;
@@ -752,7 +759,7 @@ Carry out big-map-showing:
 	if glk mapping is supported:
 		now map-document-enabled is true;
 		unset graphics disabled flag;
-		present the counterfeit monkey map with flags 4; [mapflag_UserRequestedShow]
+		present the counterfeit monkey map at user request;
 		now seen-map is true;
 		say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]" instead;
 	unless glulx graphics is supported:
@@ -845,7 +852,7 @@ Carry out enabling graphics:
 		otherwise:
 			now map-document-enabled is true;
 			unset graphics disabled flag;
-			present the counterfeit monkey map with flags 4; [mapflag_UserRequestedShow]
+			present the counterfeit monkey map at user request;
 			say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]";
 	otherwise unless glulx graphics is supported:
 		say "[first custom style][bracket]This interpreter does not support displaying graphics.[close bracket][roman type][paragraph break]" instead;
@@ -883,6 +890,45 @@ Carry out disabling graphics:
 			say "[first custom style][bracket]The map is now disabled. Type MAP ON to turn it back on, or just MAP to show it at full window size.[close bracket][roman type][paragraph break]";
 		otherwise:
 			say "[first custom style][bracket]The map is already disabled.[close bracket][roman type][paragraph break]".
+
+
+Section - Map debug commands
+
+[Kept in Multimedia (not Tests) so they survive ni -release builds used for Spatterlight.]
+
+Understand "reveal map" or "map reveal" or "see all map" as revealing the automap.
+Revealing the automap is an action out of world.
+
+Carry out revealing the automap:
+	let N be 0;
+	repeat with R running through rooms:
+		if R is on the automap:
+			now R is visited;
+			now R is map-named;
+			increase N by 1;
+	mark the automap full rebuild needed because "reveal-map";
+	if glk mapping is supported:
+		now automap enabled is true;
+		if map-document-enabled is true:
+			present the counterfeit monkey map;
+		else:
+			now map-document-enabled is true;
+			present the counterfeit monkey map at user request;
+	say "[bracket]Marked [N] map rooms as seen.[close bracket][line break]".
+
+[Galley is forbidden, so GO TO GALLEY will not parse as approaching.]
+Understand "warp galley" or "debug galley" as warping to the galley.
+Warping to the galley is an action out of world.
+
+Carry out warping to the galley:
+	now the backpack is handled;
+	now the secret-plans are seen;
+	now Slango is seen;
+	now the Counterfeit Monkey is visited;
+	if the player does not enclose the backpack:
+		now the player carries the backpack;
+	move the player to the Galley, without printing a room description;
+	try looking.
 
 
 Chapter 2 - Sounds

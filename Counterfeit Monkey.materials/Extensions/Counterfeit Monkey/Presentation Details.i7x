@@ -812,7 +812,13 @@ To say post-restore routine:
 	if glulx line input echo suppression is supported:
 		suppress line input echo in the main window;
 	unless graphics is disabled:
-		if glulx graphics is supported:
+		if glk mapping is supported:
+			[Do not open the Flexible Windows graphics pane; Glk Mapping owns the map.]
+			if the graphics window is g-present:
+				close the graphics window;
+			now map-document-enabled is true;
+			present the counterfeit monkey map; [bare present]
+		else if glulx graphics is supported:
 			now current graphics drawing rule is the compass-drawing rule;
 			unless the measuring window is g-present:
 				open the measuring window;
@@ -820,6 +826,11 @@ To say post-restore routine:
 				open the graphics window;
 			start looking for graphlinks;
 	otherwise:
+		if glk mapping is supported:
+			now map-document-enabled is false;
+			now automap enabled is false;
+			cancel map events;
+			close the map;
 		if the graphics window is g-present:
 			close the graphics window.
 

@@ -1,4 +1,4 @@
-Version 1/260822 of Glk Mapping (for Glulx only) by Dan Fabulich begins here.
+Version 1/260824 of Glk Mapping (for Glulx only) by Dan Fabulich begins here.
 
 "Exposes the Glk mapping extension (gestalt_Map): present image maps, overlays, hyperlinks, focus, and map events."
 
@@ -12,10 +12,6 @@ Chapter - Constants and gestalt
 
 Include (-
 Constant gestalt_Map = $1104;
-Constant mapflag_None = 0;
-Constant mapflag_HasFocus = 1;
-Constant mapflag_SuggestShow = 2;
-Constant mapflag_UserRequestedShow = 4;
 Constant evtype_Map = $1105;
 Constant mapevent_Hyperlink = 1;
 Constant mapevent_UserHide = 2;
@@ -32,24 +28,10 @@ Constant glk_map_overlay_move_sel = $120C;
 Constant glk_map_overlay_clear_sel = $120D;
 Constant glk_map_overlay_clear_all_sel = $120E;
 Constant glk_map_fill_rect_sel = $120F;
+Constant glk_map_overlay_svg_sel = $1210;
+Constant glk_map_get_visibility_sel = $1211;
+Constant glk_map_show_at_user_request_sel = $1212;
 -).
-
-A map flag is a kind of value. The map flags are map-has-focus, map-suggest-show, map-user-requested-show.
-
-To decide what number is the glk bit of (F - a map flag):
-	if F is map-has-focus, decide on 1;
-	if F is map-suggest-show, decide on 2;
-	if F is map-user-requested-show, decide on 4;
-	decide on 0.
-
-To decide what number is the combined glk map flags of (L - a list of map flags):
-	let N be 0;
-	repeat with F running through L:
-		now N is N bit-or the glk bit of F;
-	decide on N.
-
-To decide what number is (A - a number) bit-or (B - a number):
-	(- ({A} | {B}) -).
 
 To decide whether glk mapping is supported:
 	(- ( glk_gestalt( gestalt_Map, 0 ) ) -).
@@ -64,6 +46,16 @@ Chapter - Low-level @glk wrappers
 Include (-
 [ glk_map_close _vararg_count;
   @glk glk_map_close_sel _vararg_count 0;
+  return 0;
+];
+
+[ glk_map_get_visibility _vararg_count ret;
+  @glk glk_map_get_visibility_sel _vararg_count ret;
+  return ret;
+];
+
+[ glk_map_show_at_user_request _vararg_count;
+  @glk glk_map_show_at_user_request_sel _vararg_count 0;
   return 0;
 ];
 
@@ -133,6 +125,17 @@ Include (-
   @glk glk_map_fill_rect_sel _vararg_count ret;
   return ret;
 ];
+
+[ glk_map_overlay_svg_S _vararg_count ret;
+  @glk glk_map_overlay_svg_sel _vararg_count ret;
+  return ret;
+];
+
+! SVG bytes + length (#Cn), then geometry/link, then link label (#Cn).
+[ glk_map_overlay_svg svgbuf svglen left top width height zindex linkid linklabelbuf linklabellen;
+  return glk_map_overlay_svg_S(svgbuf, svglen, left, top, width, height, zindex, linkid,
+    linklabelbuf, linklabellen);
+];
 -).
 
 
@@ -163,38 +166,23 @@ Chapter - Present and close
 
 Section - Present Blorb image
 
-To present map image (image - a figure-name) with flags (flags - a number) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	(- glk_map_present_image( ResourceIDsOfFigures-->( {image} ), {flags}, {bg}, {fl}, {ft}, {fw}, {fh} ); -).
+To present map image (image - a figure-name) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	(- glk_map_present_image( ResourceIDsOfFigures-->( {image} ), {bg}, {fl}, {ft}, {fw}, {fh} ); -).
 
-To present map image (image - a figure-name) with flags (flags - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	present map image image with flags flags background color 4294967295 focusing on left fl top ft width fw height fh.
+To present map image (image - a figure-name) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	present map image image background color 4294967295 focusing on left fl top ft width fw height fh.
 
-To present map image (image - a figure-name) with flags (flags - a number) background color (bg - a number):
-	present map image image with flags flags background color bg focusing on left 0 top 0 width 0 height 0.
-
-To present map image (image - a figure-name) with flags (flags - a number):
-	present map image image with flags flags focusing on left 0 top 0 width 0 height 0.
+To present map image (image - a figure-name) background color (bg - a number):
+	present map image image background color bg focusing on left 0 top 0 width 0 height 0.
 
 To present map image (image - a figure-name):
-	present map image image with flags 0.
+	present map image image background color 4294967295.
 
-To present map image (image - a figure-name) with (flaglist - a list of map flags) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	present map image image with flags (the combined glk map flags of flaglist) background color bg focusing on left fl top ft width fw height fh.
+To decide whether we successfully present map image (image - a figure-name) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	(- ( glk_map_present_image( ResourceIDsOfFigures-->( {image} ), {bg}, {fl}, {ft}, {fw}, {fh} ) ) -).
 
-To present map image (image - a figure-name) with (flaglist - a list of map flags) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	present map image image with flags (the combined glk map flags of flaglist) focusing on left fl top ft width fw height fh.
-
-To present map image (image - a figure-name) with (flaglist - a list of map flags) background color (bg - a number):
-	present map image image with flags (the combined glk map flags of flaglist) background color bg.
-
-To present map image (image - a figure-name) with (flaglist - a list of map flags):
-	present map image image with flags (the combined glk map flags of flaglist).
-
-To decide whether we successfully present map image (image - a figure-name) with flags (flags - a number) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	(- ( glk_map_present_image( ResourceIDsOfFigures-->( {image} ), {flags}, {bg}, {fl}, {ft}, {fw}, {fh} ) ) -).
-
-To decide whether we successfully present map image (image - a figure-name) with flags (flags - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	if we successfully present map image image with flags flags background color 4294967295 focusing on left fl top ft width fw height fh, yes;
+To decide whether we successfully present map image (image - a figure-name) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	if we successfully present map image image background color 4294967295 focusing on left fl top ft width fw height fh, yes;
 	no.
 
 [Optional room focus rectangle. Games may leave these at 0 (no focus).]
@@ -203,60 +191,32 @@ A room has a number called map marker top. The map marker top of a room is usual
 A room has a number called map marker width. The map marker width of a room is usually 0.
 A room has a number called map marker height. The map marker height of a room is usually 0.
 
-To present map image (image - a figure-name) with flags (flags - a number) background color (bg - a number) focusing on the map marker of (R - a room):
+To present map image (image - a figure-name) background color (bg - a number) focusing on the map marker of (R - a room):
 	let fl be the map marker left of R;
 	let ft be the map marker top of R;
 	let fw be the map marker width of R;
 	let fh be the map marker height of R;
-	let present-flags be flags;
-	if fw > 0 and fh > 0:
-		now present-flags is present-flags bit-or the glk bit of map-has-focus;
-	else:
-		now fl is 0;
-		now ft is 0;
-		now fw is 0;
-		now fh is 0;
-	present map image image with flags present-flags background color bg focusing on left fl top ft width fw height fh.
+	present map image image background color bg focusing on left fl top ft width fw height fh.
 
-To present map image (image - a figure-name) with flags (flags - a number) focusing on the map marker of (R - a room):
-	present map image image with flags flags background color 4294967295 focusing on the map marker of R.
+To present map image (image - a figure-name) focusing on the map marker of (R - a room):
+	present map image image background color 4294967295 focusing on the map marker of R.
 
-To present map image (image - a figure-name) with (flaglist - a list of map flags) background color (bg - a number) focusing on the map marker of (R - a room):
-	present map image image with flags (the combined glk map flags of flaglist) background color bg focusing on the map marker of R.
-
-To present map image (image - a figure-name) with (flaglist - a list of map flags) focusing on the map marker of (R - a room):
-	present map image image with flags (the combined glk map flags of flaglist) focusing on the map marker of R.
-
-To present map SVG (svg - a text) with flags (flags - a number) background color (bg - a number) focusing on the map marker of (R - a room):
+To present map SVG (svg - a text) background color (bg - a number) focusing on the map marker of (R - a room):
 	let fl be the map marker left of R;
 	let ft be the map marker top of R;
 	let fw be the map marker width of R;
 	let fh be the map marker height of R;
-	let present-flags be flags;
-	if fw > 0 and fh > 0:
-		now present-flags is present-flags bit-or the glk bit of map-has-focus;
-	else:
-		now fl is 0;
-		now ft is 0;
-		now fw is 0;
-		now fh is 0;
-	present map SVG svg with flags present-flags background color bg focusing on left fl top ft width fw height fh.
+	present map SVG svg background color bg focusing on left fl top ft width fw height fh.
 
-To present map SVG (svg - a text) with flags (flags - a number) focusing on the map marker of (R - a room):
-	present map SVG svg with flags flags background color 4294967295 focusing on the map marker of R.
-
-To present map SVG (svg - a text) with (flaglist - a list of map flags) background color (bg - a number) focusing on the map marker of (R - a room):
-	present map SVG svg with flags (the combined glk map flags of flaglist) background color bg focusing on the map marker of R.
-
-To present map SVG (svg - a text) with (flaglist - a list of map flags) focusing on the map marker of (R - a room):
-	present map SVG svg with flags (the combined glk map flags of flaglist) focusing on the map marker of R.
+To present map SVG (svg - a text) focusing on the map marker of (R - a room):
+	present map SVG svg background color 4294967295 focusing on the map marker of R.
 
 Section - Present SVG
 
 Include (-
 Array glk_map_svg_buf -> 262144;
 
-[ GlkMapPresentSVGText txt flags bgcolor fl ft fw fh
+[ GlkMapPresentSVGText txt bgcolor fl ft fw fh
   cp pk n i c len;
   if (txt == 0) return 0;
   cp = txt-->0;
@@ -270,48 +230,45 @@ Array glk_map_svg_buf -> 262144;
   }
   TEXT_TY_Untransmute(txt, pk, cp);
   len = n;
-  return glk_map_present_svg(glk_map_svg_buf, len, flags, bgcolor, fl, ft, fw, fh);
+  return glk_map_present_svg(glk_map_svg_buf, len, bgcolor, fl, ft, fw, fh);
 ];
 -).
 
-To present map SVG (svg - a text) with flags (flags - a number) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	(- GlkMapPresentSVGText( {svg}, {flags}, {bg}, {fl}, {ft}, {fw}, {fh} ); -).
+To present map SVG buffer of length (len - a number) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	(- glk_map_present_svg(glk_map_svg_buf, {len}, {bg}, {fl}, {ft}, {fw}, {fh}); -).
 
-To present map SVG (svg - a text) with flags (flags - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	present map SVG svg with flags flags background color 4294967295 focusing on left fl top ft width fw height fh.
+To decide whether we successfully present map SVG buffer of length (len - a number) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	(- (glk_map_present_svg(glk_map_svg_buf, {len}, {bg}, {fl}, {ft}, {fw}, {fh})) -).
 
-To present map SVG (svg - a text) with flags (flags - a number) background color (bg - a number):
-	present map SVG svg with flags flags background color bg focusing on left 0 top 0 width 0 height 0.
+To present map SVG (svg - a text) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	(- GlkMapPresentSVGText( {svg}, {bg}, {fl}, {ft}, {fw}, {fh} ); -).
 
-To present map SVG (svg - a text) with flags (flags - a number):
-	present map SVG svg with flags flags focusing on left 0 top 0 width 0 height 0.
+To present map SVG (svg - a text) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	present map SVG svg background color 4294967295 focusing on left fl top ft width fw height fh.
+
+To present map SVG (svg - a text) background color (bg - a number):
+	present map SVG svg background color bg focusing on left 0 top 0 width 0 height 0.
 
 To present map SVG (svg - a text):
-	present map SVG svg with flags 0.
+	present map SVG svg background color 4294967295.
 
-To present map SVG (svg - a text) with (flaglist - a list of map flags) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	present map SVG svg with flags (the combined glk map flags of flaglist) background color bg focusing on left fl top ft width fw height fh.
+To decide whether we successfully present map SVG (svg - a text) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	(- ( GlkMapPresentSVGText( {svg}, {bg}, {fl}, {ft}, {fw}, {fh} ) ) -).
 
-To present map SVG (svg - a text) with (flaglist - a list of map flags) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	present map SVG svg with flags (the combined glk map flags of flaglist) focusing on left fl top ft width fw height fh.
-
-To present map SVG (svg - a text) with (flaglist - a list of map flags) background color (bg - a number):
-	present map SVG svg with flags (the combined glk map flags of flaglist) background color bg.
-
-To present map SVG (svg - a text) with (flaglist - a list of map flags):
-	present map SVG svg with flags (the combined glk map flags of flaglist).
-
-To decide whether we successfully present map SVG (svg - a text) with flags (flags - a number) background color (bg - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	(- ( GlkMapPresentSVGText( {svg}, {flags}, {bg}, {fl}, {ft}, {fw}, {fh} ) ) -).
-
-To decide whether we successfully present map SVG (svg - a text) with flags (flags - a number) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
-	if we successfully present map SVG svg with flags flags background color 4294967295 focusing on left fl top ft width fw height fh, yes;
+To decide whether we successfully present map SVG (svg - a text) focusing on left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
+	if we successfully present map SVG svg background color 4294967295 focusing on left fl top ft width fw height fh, yes;
 	no.
 
 Section - Focus and close
 
 To close the map:
 	(- glk_map_close(); -).
+
+To decide whether the map is visible:
+	(- ( glk_map_get_visibility() ) -).
+
+To show the map at user request:
+	(- glk_map_show_at_user_request(); -).
 
 To set map focus left (fl - a number) top (ft - a number) width (fw - a number) height (fh - a number):
 	(- glk_map_set_focus( {fl}, {ft}, {fw}, {fh} ); -).
@@ -368,25 +325,42 @@ Array glk_map_hyperlink_pointscratch --> 64;
 ];
 
 [ GlkMapHyperlinkCommit;
-  if (glk_map_hyperlink_count == 0)
-    glk_map_set_hyperlinks(0);
-  else
-    glk_map_set_hyperlinks(glk_map_hyperlink_words, glk_map_hyperlink_wordcount, glk_map_hyperlink_count);
+  ! Glulx dispatch expects (array, wordcount, nlinks); one-arg clear is invalid.
+  glk_map_set_hyperlinks(glk_map_hyperlink_words, glk_map_hyperlink_wordcount, glk_map_hyperlink_count);
 ];
 
 [ GlkMapHyperlinkAddFromText id txt point_list
-  cp pk n i c ncoords npoints;
-  if (txt == 0) {
-    n = 0;
-  } else {
+  cp pk n i c ncoords npoints nbytes;
+  nbytes = 0;
+  if (txt ~= 0) {
     cp = txt-->0;
     pk = TEXT_TY_Temporarily_Transmute(txt);
     n = TEXT_TY_CharacterLength(txt);
-    if (n > 255) n = 255;
     for (i = 0: i < n: i++) {
       c = BlkValueRead(txt, i);
-      if (c < 0 || c > 255) c = '?';
-      glk_map_hyperlink_label_bytes->i = c;
+      if (c == 0) break;
+      ! Pack UTF-8 into the label byte buffer (remglk expects UTF-8, not Latin-1).
+      if (c < 128) {
+        if (nbytes < 255) { glk_map_hyperlink_label_bytes->nbytes = c; nbytes++; }
+      } else if (c < $800) {
+        if (nbytes + 1 < 255) {
+          glk_map_hyperlink_label_bytes->nbytes = $C0 + (c / $40); nbytes++;
+          glk_map_hyperlink_label_bytes->nbytes = $80 + (c & $3F); nbytes++;
+        }
+      } else if (c < $10000) {
+        if (nbytes + 2 < 255) {
+          glk_map_hyperlink_label_bytes->nbytes = $E0 + (c / $1000); nbytes++;
+          glk_map_hyperlink_label_bytes->nbytes = $80 + ((c / $40) & $3F); nbytes++;
+          glk_map_hyperlink_label_bytes->nbytes = $80 + (c & $3F); nbytes++;
+        }
+      } else {
+        if (nbytes + 3 < 255) {
+          glk_map_hyperlink_label_bytes->nbytes = $F0 + (c / $40000); nbytes++;
+          glk_map_hyperlink_label_bytes->nbytes = $80 + ((c / $1000) & $3F); nbytes++;
+          glk_map_hyperlink_label_bytes->nbytes = $80 + ((c / $40) & $3F); nbytes++;
+          glk_map_hyperlink_label_bytes->nbytes = $80 + (c & $3F); nbytes++;
+        }
+      }
     }
     TEXT_TY_Untransmute(txt, pk, cp);
   }
@@ -396,7 +370,7 @@ Array glk_map_hyperlink_pointscratch --> 64;
   if (npoints > 32) npoints = 32;
   for (i = 0: i < npoints * 2: i++)
     glk_map_hyperlink_pointscratch-->i = LIST_OF_TY_GetItem(point_list, i + 1);
-  GlkMapHyperlinkAdd(id, n, glk_map_hyperlink_label_bytes, npoints, glk_map_hyperlink_pointscratch);
+  GlkMapHyperlinkAdd(id, nbytes, glk_map_hyperlink_label_bytes, npoints, glk_map_hyperlink_pointscratch);
 ];
 -).
 
@@ -413,7 +387,8 @@ To commit map hyperlinks:
 	(- GlkMapHyperlinkCommit(); -).
 
 To clear map hyperlinks:
-	(- glk_map_set_hyperlinks(0); -).
+	begin map hyperlinks;
+	commit map hyperlinks.
 
 To set map hyperlinks to (L - a list of map hyperlinks):
 	begin map hyperlinks;
@@ -501,6 +476,48 @@ To fill map rect color (C - a number) at left (L - a number) top (T - a number) 
 To decide what number is the map fill rect color (C - a number) at left (L - a number) top (T - a number) width (W - a number) height (H - a number) z-index (Z - a number):
 	(- glk_map_fill_rect( {C}, {L}, {T}, {W}, {H}, {Z} ) -).
 
+Include (-
+[ GlkMapOverlaySvgWithText svglen left top width height zindex linkid txt
+  cp pk n i c;
+  if (txt == 0)
+    return glk_map_overlay_svg(glk_map_svg_buf, svglen, left, top, width, height, zindex, linkid,
+      glk_map_ovl_label, 0);
+  cp = txt-->0;
+  pk = TEXT_TY_Temporarily_Transmute(txt);
+  n = TEXT_TY_CharacterLength(txt);
+  if (n > 255) n = 255;
+  for (i = 0: i < n: i++) {
+    c = BlkValueRead(txt, i);
+    if (c < 0 || c > 255) c = '?';
+    glk_map_ovl_label->i = c;
+  }
+  TEXT_TY_Untransmute(txt, pk, cp);
+  return glk_map_overlay_svg(glk_map_svg_buf, svglen, left, top, width, height, zindex, linkid,
+    glk_map_ovl_label, n);
+];
+-).
+
+To decide what number is the map svg overlay of length (len - a number) at left (L - a number) top (T - a number) width (W - a number) height (H - a number) z-index (Z - a number) link id (id - a number) labeled (lab - a text):
+	(- GlkMapOverlaySvgWithText( {len}, {L}, {T}, {W}, {H}, {Z}, {id}, {lab} ) -).
+
+To decide what number is the map svg overlay of length (len - a number) at left (L - a number) top (T - a number) width (W - a number) height (H - a number) z-index (Z - a number) link id (id - a number):
+	decide on the map svg overlay of length len at left L top T width W height H z-index Z link id id labeled "".
+
+To decide what number is the map svg overlay of length (len - a number) at left (L - a number) top (T - a number) width (W - a number) height (H - a number) z-index (Z - a number):
+	decide on the map svg overlay of length len at left L top T width W height H z-index Z link id 0 labeled "".
+
+To decide what number is the map svg overlay of length (len - a number) at left (L - a number) top (T - a number) z-index (Z - a number):
+	decide on the map svg overlay of length len at left L top T width 0 height 0 z-index Z.
+
+To overlay svg buffer of length (len - a number) at left (L - a number) top (T - a number) width (W - a number) height (H - a number) z-index (Z - a number) link id (id - a number) labeled (lab - a text):
+	(- GlkMapOverlaySvgWithText( {len}, {L}, {T}, {W}, {H}, {Z}, {id}, {lab} ); -).
+
+To overlay svg buffer of length (len - a number) at left (L - a number) top (T - a number) width (W - a number) height (H - a number) z-index (Z - a number):
+	overlay svg buffer of length len at left L top T width W height H z-index Z link id 0 labeled "".
+
+To overlay svg buffer of length (len - a number) at left (L - a number) top (T - a number) z-index (Z - a number):
+	overlay svg buffer of length len at left L top T width 0 height 0 z-index Z.
+
 
 
 Chapter - Map events
@@ -546,7 +563,7 @@ First glulx input handling rule when the current event is a map event (this is t
 		cancel line input in the main window;
 		cancel character input in the main window;
 		say "[run paragraph on][line break]";
-		follow the map user hide rules without linebreaks;
+		follow the map user hide rules;
 		print prompt;
 		re-request line input in the main window;
 		require input to continue;
@@ -562,10 +579,12 @@ This extension wraps the Glk mapping API (gestalt_Map = $1104).
 
 Section: Presenting maps
 
-	present map image Figure of Overview with { map-suggest-show };
-	present map image Figure of Overview with { map-has-focus, map-suggest-show }
-		focusing on left 10 top 20 width 100 height 80;
-	present map SVG "<svg xmlns='http://www.w3.org/2000/svg'>...</svg>" with { map-user-requested-show };
+	present map image Figure of Overview focusing on left 10 top 20 width 100 height 80;
+	present map SVG "<svg xmlns='http://www.w3.org/2000/svg'>...</svg>";
+	show the map at user request;
+
+	if the map is visible:
+		say "The map is on screen.";
 
 Section: Overlays
 
@@ -575,8 +594,10 @@ Section: Overlays
 	let O be the map overlay of Figure of You at left 0 top 0 z-index 20;
 	move map overlay O to left 50 top 60 width 0 height 0 z-index 20;
 	clear map overlay O;
+	let S be the map svg overlay of length Len at left 10 top 20 z-index 5;
 
-width/height 0 means natural image size. link id 0 (or omitted) is decorative.
+width/height 0 means natural image/SVG size. link id 0 (or omitted) is decorative.
+SVG overlays read from glk_map_svg_buf (same buffer as present map SVG buffer).
 
 Section: Polygon hyperlinks
 
@@ -593,4 +614,4 @@ Section: Events
 	A map hyperlink command rule for a number (called linkid): ...
 	A map user hide rule: ...
 
-Selectors: present_svg $1203, close $1204, focus $1205/$1206, map events $1207/$1208, present_image $1209, set_hyperlinks $120A, overlays $120B–$120E, fill_rect $120F.
+Selectors: present_svg $1203, close $1204, focus $1205/$1206, map events $1207/$1208, present_image $1209, set_hyperlinks $120A, overlays $120B–$120E, fill_rect $120F, get_visibility $1211, show_at_user_request $1212.

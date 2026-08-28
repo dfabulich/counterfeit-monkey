@@ -353,6 +353,11 @@ Include Act IV Among Policemen by Counterfeit Monkey.
 				•	Section 4 - Testing Room
 				•	Section 5 - Cold Storage ]
 
+[Automap defines nautical directions + opposites; must load before Act V
+room connections so Inform creates reverse map links (aft from fore, etc.).]
+Include Automap by Dan Fabulich.
+Include Automap Geometry by Dan Fabulich.
+
 Include Act V Atlantida Herself by Counterfeit Monkey.
 
 [	•	Book 5 - Act V Atlantida Herself
@@ -387,9 +392,6 @@ Include Act V Atlantida Herself by Counterfeit Monkey.
 				•	Section 13 - View from Outdoor Areas ]
 
 Include Map Declarations by Counterfeit Monkey.
-
-Include Semantic Mapping by Dan Fabulich.
-Include Semantic Map Geometry by Dan Fabulich.
 
 [	•	Book 6 - Map Declarations
 		•	Chapter 1 - Main Map

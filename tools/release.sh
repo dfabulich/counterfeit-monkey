@@ -31,6 +31,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 PROJ="$REPO_ROOT/Counterfeit Monkey.inform"
 RELEASE_GBLORB="$REPO_ROOT/Counterfeit Monkey.materials/Release/Counterfeit Monkey.gblorb"
+BUILD_GBLORB="$PROJ/Build/output.gblorb"
 
 uname_s="$(uname -s 2>/dev/null || echo unknown)"
 case "$uname_s" in
@@ -125,12 +126,15 @@ echo "    CBLORB=$CBLORB"
 if [ "$CBLORB_OS" = osx ]; then
 	"$CBLORB" \
 		"$PROJ/Release.blurb" \
-		"$PROJ/Build/output.gblorb"
+		"$BUILD_GBLORB"
 else
 	"$CBLORB" "-$CBLORB_OS" \
 		"$PROJ/Release.blurb" \
-		"$PROJ/Build/output.gblorb"
+		"$BUILD_GBLORB"
 fi
+
+mkdir -p "$(dirname "$RELEASE_GBLORB")"
+cp "$BUILD_GBLORB" "$RELEASE_GBLORB"
 
 echo
 echo "Release gblorb: $RELEASE_GBLORB"

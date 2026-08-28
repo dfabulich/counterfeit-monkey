@@ -1053,28 +1053,21 @@ Section 1 - Nautical Directions
 
 Test nautical with "tutorial off / fore / fore / aft / down" in Sunning Deck.
 
-A room can be nautical or earthbound. A room is usually not nautical. A direction can be earthbound-directional or nautical-directional. A direction is usually earthbound-directional. Starboard, port, fore, aft, up, down, the inside and the outside are nautical-directional.
+A room can be nautical or earthbound. A room is usually not nautical. A direction can be earthbound-directional or nautical-directional. A direction is usually earthbound-directional. Starboard, port, fore, aft, aft-port, aft-starboard, fore-port, fore-starboard, up, down, the inside and the outside are nautical-directional.
 
 North, west, east, south, northwest, northeast, southwest, and southeast are earthbound-directional.
 
 Rule for listing exits while looking in a nautical room:
 	do nothing instead.
 
-The starboard is a direction. The starboard has opposite port. Understand "sb" as starboard when the location is nautical.
-
-The port is a direction. The port has opposite starboard. Understand "p" as port when the location is nautical.
-
-The fore is a direction. The fore has opposite aft. Understand "f" as fore when the location is nautical.
-
-The aft is a direction. The aft has opposite fore. Understand "a" or "af" as aft when the location is nautical.
-
-The aft-port is a direction. The aft-port has opposite fore-starboard. It is nautical-directional. Understand "pa" or "ap" as aft-port when the location is nautical.
-
-The aft-starboard is a direction. It is nautical-directional. The aft-starboard has opposite fore-port. Understand "sa" or "as" or "asb" as aft-starboard when the location is nautical.
-
-The fore-port is a direction. It is nautical-directional. The fore-port has opposite aft-starboard. Understand "pf" or "fp" as fore-port when the location is nautical.
-
-The fore-starboard is a direction. It is nautical-directional. The fore-starboard has opposite aft-port. Understand "sf" or "fs" or "fsb" as fore-starboard when the location is nautical.
+Understand "sb" as starboard when the location is nautical.
+Understand "p" as port when the location is nautical.
+Understand "f" as fore when the location is nautical.
+Understand "a" or "af" as aft when the location is nautical.
+Understand "pa" or "ap" as aft-port when the location is nautical.
+Understand "sa" or "as" or "asb" as aft-starboard when the location is nautical.
+Understand "pf" or "fp" as fore-port when the location is nautical.
+Understand "sf" or "fs" or "fsb" as fore-starboard when the location is nautical.
 
 Does the player mean going a nautical-directional direction when the location is nautical: it is very likely.
 

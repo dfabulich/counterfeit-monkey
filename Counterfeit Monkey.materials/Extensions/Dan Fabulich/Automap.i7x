@@ -30,6 +30,7 @@ Automap scale is a number that varies. Automap scale is 20.
 Automap enabled is a truth state that varies. Automap enabled is initially true.
 
 Automap hyperlinks enabled is a truth state that varies. Automap hyperlinks enabled is initially false.
+Automap hyperlinks last painted is a truth state that varies. Automap hyperlinks last painted is initially false.
 
 [If a table of geometry is present, it takes precedence over any per-room
 map x/map y/map width/map height declarations.]
@@ -244,15 +245,22 @@ To forget all automap overlay ids:
 A room has a number called automap dense room id. The automap dense room id of a room is usually 0.
 The automap dense room count is a number that varies.
 
+To register (subject - an object) in the automap dense room table at index (n - a number):
+	(- AM_room_at_dense-->({n} - 1) = {subject}; -)
+
 To sync automap dense room ids:
 	let next-dense-room-id be 0;
 	repeat with subject running through rooms:
 		if subject is on the automap:
 			increase next-dense-room-id by 1;
 			now the automap dense room id of subject is next-dense-room-id;
+			register subject in the automap dense room table at index next-dense-room-id;
 		else:
 			now the automap dense room id of subject is 0;
 	now the automap dense room count is next-dense-room-id.
+
+To decide which object is the automap room at dense index (n - a number):
+	(- AM_room_at_dense-->({n} - 1) -)
 
 
 Chapter - Connector and badge indexes
@@ -265,6 +273,7 @@ Include (-
 
 ! Per-exit connector overlays, keyed by dense room id (1..AM_MAX_ROOMS) × way index.
 Constant AM_MAX_ROOMS = 256;
+Array AM_room_at_dense --> AM_MAX_ROOMS;
 Constant AM_MAX_WAYS_PER_ROOM = 24; ! compass + remapped bearings + badges, with headroom
 Array AM_connector_overlay_ids --> 6144; ! 256 * 24
 Array AM_connector_kinds --> 6144;
@@ -1475,7 +1484,9 @@ To install the automap room overlay for (subject - a room):
 	let draw-top be view-top - the automap view origin y;
 	let linkid be 0;
 	if automap hyperlinks enabled is true:
-		now linkid is the object number of subject;
+		let dense-id be the automap dense room id of subject;
+		if dense-id > 0:
+			now linkid is dense-id;
 	let overlay-id be the map svg overlay of length (the automap svg buffer length) at left draw-left top draw-top width view-width height view-height z-index 10 link id linkid labeled (the automap label of subject);
 	now the automap overlay id of subject is overlay-id;
 	if overlay-id < 1:
@@ -1715,6 +1726,8 @@ To sync automap exits for (subject - a room):
 To update the automap incrementally:
 	unless glk mapping is supported, stop;
 	unless automap enabled is true, stop;
+	if automap hyperlinks enabled is not automap hyperlinks last painted:
+		mark the automap full rebuild needed because "hyperlinks toggled";
 	sync the automap page from the location;
 	update automap named rooms quietly;
 	rebuild the automap palette;
@@ -1755,6 +1768,7 @@ To update the automap incrementally:
 				repeat with way running through {up, down, inside, outside}:
 					install the automap badge from subject for way;
 		now automap full rebuild needed is false;
+		now automap hyperlinks last painted is automap hyperlinks enabled;
 	else:
 		[Sync current room and previous drawn room. Room SVG only when appearance
 		 drifted; exit sync diffs live vs drawn and no-ops when unchanged.]
@@ -1783,19 +1797,21 @@ Part - Player surface
 
 Chapter - Hyperlinks
 
-[Room hit-testing uses overlay link_id; clear legacy polygon hyperlinks in refresh.]
+[Room hit-testing uses overlay link_id (dense room id 1..N); clear legacy polygon hyperlinks in refresh.]
 
-A map hyperlink command rule for a number (called linkid) (this is the automap room hyperlink rule):
-	repeat with subject running through rooms:
-		if the object number of subject is linkid:
-			if subject is the location:
-				now the glulx replacement command is "look";
-			else:
-				let way be the best route from the location to subject;
-				if way is a direction:
-					now the glulx replacement command is "[way]";
-				else:
-					now the glulx replacement command is "";
+The automap room hyperlink rules are a room based rulebook.
+
+To set the automap hyperlink command to look:
+	now the glulx replacement command is "look".
+
+To set the automap hyperlink command to go to (target - a room):
+	now the glulx replacement command is "go to [target]".
+
+A map hyperlink command rule for a number (called linkid) (this is the automap dense room dispatch rule):
+	if linkid >= 1 and linkid <= automap dense room count:
+		let target be the automap room at dense index linkid;
+		if target is a room:
+			follow the automap room hyperlink rules for target;
 			rule succeeds.
 
 
@@ -1953,13 +1969,21 @@ nautical directions or other remapped directions. We can only create
 reverse map links when a direction's opposite is already defined; Automap
 defines those opposites.
 
+Section: Refreshing the automap
+
+By default, the automap updates incrementally, only refreshing the label
+and exits for the current room and the previous room.
+
+To refresh the entire automap, use "refresh the automap." (This scans all
+rooms, which can be slow.)
+
 Section: Public API — enable, show, and hyperlinks
 
 Global switches:
 
 	automap enabled — true by default; MAP rebuilds, hide turns it off
-	automap hyperlinks enabled — true by default; false skips polygon
-		hyperlinks (saves work on large maps)
+	automap hyperlinks enabled — false by default; true enables click regions
+		on visible room overlays
 
 Built-in command: MAP / automap (out of world).
 
@@ -1970,6 +1994,14 @@ Phrases:
 
 Use "show the map at user request" when the player explicitly asked for the map (MAP
 command).
+
+When automap hyperlinks enabled is true, visible room overlays are clickable.
+Define behavior in automap room hyperlink rules — set glulx replacement command
+(or use set the automap hyperlink command to look / go to …). Automap does not
+route; wire clicks to your navigation (e.g. Approaches go to [room]).
+
+Do not call Glk Mapping overlay or polygon-hyperlink APIs from game code when
+using Automap; Automap owns the map.
 
 Section: Public API — fog of war and discovery
 
@@ -1985,34 +2017,15 @@ Author-facing:
 	discover all visible automap rooms — e.g. debug reveal of the whole page
 	update automap named rooms quietly — sync map-named for the location
 
-Section: Public API — refresh control
-
-When your code changes map state outside normal going (teleport, gate, reveal,
-geometry edit), or when you need the map updated immediately:
-
-	refresh the automap
-
-This forces a full resync: blank present, reinstall all visible overlays.
-Call it before show the map at user request when re-enabling the map after
-the player hid it.
-
-Label and topology drift during normal play is handled automatically after
-going and every turn. You do not need refresh on every move.
-
-Section: Automatic behavior
-
-If automap enabled is true, the extension updates incrementally after going
-and every turn, and does a full refresh on play begin / recover / undo when
-enabled.
-
 Section: Internal — do not use
 
-The following are implementation details for the SVG overlay renderer, not
-a supported author API. Do not call them from game source; names may change.
+The following are implementation details, not a supported author API.
 
 update the automap incrementally — cheap sync used by going/every-turn rules.
-mark the automap full rebuild needed — schedules full rebuild on the next
-incremental pass (page change, geometry apply, overlay-id failure).
+mark the automap full rebuild needed — schedules full rebuild on next incremental pass.
+map hyperlink command rules — Automap registers dense-id dispatch; games use
+	automap room hyperlink rules instead.
+automap room at dense index — O(1) room lookup from overlay link id.
 
 Overlay and index state: automap overlay id, automap dense room id,
 automap connector/badge overlay at dense…, connector kind/peer indexes,
@@ -2036,7 +2049,4 @@ not duplicated by a compass link between the same rooms). Colors follow
 Spatterlight paper/ink shades when the runner supports glk_style_measure. The
 host focus rectangle zooms to the current room; the SVG viewBox covers the
 active page.
-
-When automap hyperlinks enabled is true, clicking a visible room issues
-the first step of the best route there (ADRIFT-style).
 

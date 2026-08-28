@@ -367,4 +367,14 @@ The local map of Slango's Bunk is the Figure of Slango-Bunk.
 The local map of Slango's Head is the Figure of Slango-Head.
 
 
+Chapter 2 - Automap hyperlinks
+
+An automap room hyperlink rule for a room (called target):
+	if target is the location:
+		set the automap hyperlink command to look;
+	otherwise:
+		set the automap hyperlink command to go to target;
+	rule succeeds.
+
+
 Map Declarations ends here.

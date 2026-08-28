@@ -553,9 +553,18 @@ To decide what number is the current map link id:
 To re-request line input in the/-- main window:
 	(- glk_request_line_event(gg_mainwin, buffer+WORDSIZE, INPUT_BUFFER_LEN-WORDSIZE, 0); -).
 
+To paste the glulx map hyperlink replacement command:
+	follow the command-counting rules;
+	if the rule failed, rule succeeds;
+	follow the input-cancelling rules;
+	follow the command-showing rules;
+	follow the command-pasting rules.
+
 First glulx input handling rule when the current event is a map event (this is the handle map event rule):
 	if the current map event is a hyperlink event:
 		follow the map hyperlink command rules for the current map link id;
+		paste the glulx map hyperlink replacement command;
+		request map events;
 		rule succeeds;
 	if the current map event is a user-hide event:
 		[Line input is usually armed when the map is closed; printing then

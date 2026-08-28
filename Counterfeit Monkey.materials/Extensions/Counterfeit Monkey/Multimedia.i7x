@@ -12,13 +12,8 @@ Part 2 - Multimedia
 
 Chapter - Map documents (for interpreters with gestalt_Map)
 
-[When the interpreter supports Glk mapping, we never open the
- Flexible Windows graphics pane. The local map is shown via
- map present-image; side extends and the compass are
- map overlays (compass overlays carry link ids).]
-
-Map look link id is a number that varies.
-Map look link id is initially 1.
+[When the interpreter supports Glk mapping, we never open the Flexible Windows
+ graphics pane. Automap draws the map via Glk mapping SVG overlays.]
 
 To decide which figure-name is the visited compass figure of (way - a direction):
 	(- VisitedImageOf({way}) -).
@@ -31,15 +26,6 @@ To determine map-document compass coordinates with height (H - a number) compass
 
 To decide whether the location has a local map figure:
 	(- ( GProperty(OBJECT_TY, real_location, (+ local map +) ) ~= 0 ) -).
-
-A map hyperlink command rule for a number (called linkid) (this is the counterfeit monkey map hyperlink rule):
-	if linkid is map look link id:
-		now the glulx replacement command is "look";
-		rule succeeds;
-	repeat with D running through directions:
-		if the object number of D is linkid:
-			now the glulx replacement command is "[printed name of D]";
-			rule succeeds.
 
 Chapter - The graphics window
 
@@ -724,6 +710,7 @@ Understand "map" as big-map-showing. Big-map-showing is an action out of world.
 Carry out big-map-showing:
 	if glk mapping is supported:
 		now automap enabled is true;
+		now automap hyperlinks enabled is true;
 		unset graphics disabled flag;
 		refresh the automap;
 		show the map at user request;
@@ -818,6 +805,7 @@ Carry out enabling graphics:
 			say "[first custom style][bracket]The map is already enabled.[close bracket][roman type][paragraph break]";
 		otherwise:
 			now automap enabled is true;
+			now automap hyperlinks enabled is true;
 			unset graphics disabled flag;
 			refresh the automap;
 			show the map at user request;

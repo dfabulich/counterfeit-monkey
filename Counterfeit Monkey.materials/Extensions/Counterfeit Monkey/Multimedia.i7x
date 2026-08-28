@@ -725,7 +725,6 @@ Carry out big-map-showing:
 	if glk mapping is supported:
 		now automap enabled is true;
 		unset graphics disabled flag;
-		mark the automap full rebuild needed because "map-cmd";
 		refresh the automap;
 		show the map at user request;
 		now seen-map is true;
@@ -820,7 +819,6 @@ Carry out enabling graphics:
 		otherwise:
 			now automap enabled is true;
 			unset graphics disabled flag;
-			mark the automap full rebuild needed because "map-on";
 			refresh the automap;
 			show the map at user request;
 			say "[first custom style][bracket]The map is now enabled. Type MAP OFF to turn it off again.[close bracket][roman type][paragraph break]";
@@ -876,7 +874,6 @@ Carry out revealing the automap:
 			now R is visited;
 			now R is map-named;
 			increase N by 1;
-	mark the automap full rebuild needed because "reveal-map";
 	refresh the automap;
 	say "[bracket]Marked [N] map rooms as seen.[close bracket][line break]".
 

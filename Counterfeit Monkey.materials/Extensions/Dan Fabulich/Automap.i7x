@@ -1712,7 +1712,7 @@ To sync automap exits for (subject - a room):
 		if live-badge is not drawn-badge:
 			install the automap badge from subject for way;
 
-To refresh the automap:
+To update the automap incrementally:
 	unless glk mapping is supported, stop;
 	unless automap enabled is true, stop;
 	sync the automap page from the location;
@@ -1774,6 +1774,10 @@ To refresh the automap:
 	now the automap previous location is the location;
 	request map events.
 
+To refresh the automap:
+	mark the automap full rebuild needed because "author";
+	update the automap incrementally.
+
 
 Part - Player surface
 
@@ -1803,7 +1807,6 @@ Understand "map" as requesting the automap.
 Carry out requesting the automap:
 	if glk mapping is supported:
 		now automap enabled is true;
-		mark the automap full rebuild needed because "map-cmd";
 		refresh the automap;
 		show the map at user request;
 	else:
@@ -1845,10 +1848,10 @@ Every turn (this is the mark lit rooms map-named rule):
 [We refresh the automap when going to ensure that if you enter a room X and then teleport to room Y in the same turn, X will be refreshed as well as Y.]
 Report going when the actor is the player (this is the refresh automap after going rule):
 	if automap enabled is true and glk mapping is supported:
-		refresh the automap.
+		update the automap incrementally.
 
 Every turn when automap enabled is true and glk mapping is supported (this is the refresh automap every turn rule):
-	refresh the automap.
+	update the automap incrementally.
 
 A first when play begins rule (this is the apply automap geometry table rule):
 	apply the automap geometry table;
@@ -1864,7 +1867,6 @@ When play begins (this is the initial automap rule):
 	if glk mapping is supported:
 		now the location is visited;
 		now the location is map-named;
-		mark the automap full rebuild needed because "play-begins";
 		refresh the automap.
 
 [Glk windows survive undo/restore/restart; game state (dirty, caches, enabled)
@@ -1875,7 +1877,6 @@ A glulx object-updating rule (this is the refresh automap after recovering rule)
 	if glk mapping is supported:
 		if automap enabled is true:
 			clear the automap base;
-			mark the automap full rebuild needed because "recover";
 			refresh the automap;
 		else:
 			close the map;
@@ -1967,12 +1968,8 @@ Phrases:
 	refresh the automap
 	show the map at user request
 
-Use show the map at user request when the player explicitly asked for the map (MAP
-command). Bare refresh is for automatic updates after movement. refresh is a no-op unless automap enabled is true
-and glk mapping is supported.
-
-A map user hide rule sets automap enabled to false when the player closes
-the map in the runner.
+Use "show the map at user request" when the player explicitly asked for the map (MAP
+command).
 
 Section: Public API — fog of war and discovery
 
@@ -1991,27 +1988,31 @@ Author-facing:
 Section: Public API — refresh control
 
 When your code changes map state outside normal going (teleport, gate, reveal,
-geometry edit), nudge the renderer:
+geometry edit), or when you need the map updated immediately:
 
-	mark the automap full rebuild needed
-	mark the automap full rebuild needed because "reason"
+	refresh the automap
 
-full rebuild needed — blank present, reinstall all visible overlays (MAP, undo/
-restore, page change, geometry apply, overlay-id failure).
+This forces a full resync: blank present, reinstall all visible overlays.
+Call it before show the map at user request when re-enabling the map after
+the player hid it.
 
-For other topology or label changes, refresh the automap if the map is enabled.
+Label and topology drift during normal play is handled automatically after
+going and every turn. You do not need refresh on every move.
 
 Section: Automatic behavior
 
-If automap enabled is true, the extension refreshes after going and every
-turn, and on play begin / recover / undo when enabled.
-You do not need to call refresh on every move unless you disabled the default
-rules or changed geometry/topology yourself.
+If automap enabled is true, the extension updates incrementally after going
+and every turn, and does a full refresh on play begin / recover / undo when
+enabled.
 
 Section: Internal — do not use
 
 The following are implementation details for the SVG overlay renderer, not
 a supported author API. Do not call them from game source; names may change.
+
+update the automap incrementally — cheap sync used by going/every-turn rules.
+mark the automap full rebuild needed — schedules full rebuild on the next
+incremental pass (page change, geometry apply, overlay-id failure).
 
 Overlay and index state: automap overlay id, automap dense room id,
 automap connector/badge overlay at dense…, connector kind/peer indexes,

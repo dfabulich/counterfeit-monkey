@@ -10,6 +10,9 @@
 #   INFORM_APP        macOS: Inform.app bundle (used only to derive defaults)
 #   CBLORB_OS         cBlorb platform flag: osx | unix | windows
 #
+# Note: cBlorb only writes Build/output.gblorb. Copying it into Materials/Release
+# is normally done by the Inform IDE after reading "Copy blorb to: [[...]]" from
+# cBlorb stdout. This script performs that copy because it runs cBlorb directly.
 # Typical locations (see https://intfiction.org/t/50108):
 #   macOS (Inform 1.82 / language 10.x with retrospective 6M62):
 #     INFORM_APP=/Applications/Inform.app
@@ -131,6 +134,13 @@ else
 		"$PROJ/Release.blurb" \
 		"$PROJ/Build/output.gblorb"
 fi
+
+# cBlorb writes the blorb to Build/output.gblorb (2nd argument) and prints
+#   Copy blorb to: [[.../Release/Counterfeit Monkey.gblorb]]
+# for the Inform *application* to perform. It does not copy the blorb itself
+# when invoked from the shell (see Inblorb docs, "Using Inblorb", step 7).
+# Other Release/ files (website, cover, auxiliaries) are copied by cBlorb.
+cp "$PROJ/Build/output.gblorb" "$RELEASE_GBLORB"
 
 echo
 echo "Release gblorb: $RELEASE_GBLORB"

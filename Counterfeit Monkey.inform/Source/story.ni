@@ -356,7 +356,6 @@ Include Act IV Among Policemen by Counterfeit Monkey.
 [Automap defines nautical directions + opposites; must load before Act V
 room connections so Inform creates reverse map links (aft from fore, etc.).]
 Include Automap by Dan Fabulich.
-Include Automap Geometry by Dan Fabulich.
 
 Include Act V Atlantida Herself by Counterfeit Monkey.
 
@@ -390,6 +389,109 @@ Include Act V Atlantida Herself by Counterfeit Monkey.
 				•	Section 11 - Slango's Bunk
 				•	Section 12 - Slango's Head
 				•	Section 13 - View from Outdoor Areas ]
+
+Chapter - Automap geometry
+
+The map x of Abandoned Park is 81. The map y of Abandoned Park is 63.
+The map x of Abandoned Shore is 126. The map y of Abandoned Shore is 14. The map z of Abandoned Shore is -3.
+The map x of All-Purpose Office is 90. The map y of All-Purpose Office is 77.
+The map x of Ampersand Bend is 27. The map y of Ampersand Bend is 70.
+The map x of Antechamber is 72. The map y of Antechamber is 77.
+The map x of Apartment Bathroom is 54. The map y of Apartment Bathroom is 84.
+The map x of Aquarium Bookstore is 81. The map y of Aquarium Bookstore is 56.
+The map x of Arbot Maps & Antiques is 54. The map y of Arbot Maps & Antiques is 77.
+The map x of Babel Café is 63. The map y of Babel Café is 91.
+The map x of Back Alley is 18. The map y of Back Alley is 77.
+The map x of Beside Slango's Ship is 126. The map y of Beside Slango's Ship is 0. The map z of Beside Slango's Ship is -3.
+The map x of Brock's Head is 0. The map y of Brock's Head is 21. The map page id of Brock's Head is 1.
+The map x of Brock's Stateroom is 9. The map y of Brock's Stateroom is 14. The map page id of Brock's Stateroom is 1.
+The map x of Brown's Lab is 81. The map y of Brown's Lab is 91. The map z of Brown's Lab is -1.
+The map x of Bureau Basement Middle is 99. The map y of Bureau Basement Middle is 56. The map z of Bureau Basement Middle is -1.
+The map x of Bureau Basement Secret Section is 99. The map y of Bureau Basement Secret Section is 49. The map z of Bureau Basement Secret Section is -1.
+The map x of Bureau Basement South is 99. The map y of Bureau Basement South is 63. The map z of Bureau Basement South is -1.
+The map x of Bureau Hallway is 81. The map y of Bureau Hallway is 77.
+The map x of Bus Station is 90. The map y of Bus Station is 70.
+The map x of Cathedral Gift Shop is 9. The map y of Cathedral Gift Shop is 63.
+The map x of Church Forecourt is 18. The map y of Church Forecourt is 56.
+The map x of Church Garden is 0. The map y of Church Garden is 56.
+The map x of Cinema Lobby is 18. The map y of Cinema Lobby is 49.
+The map x of Cold Storage is 90. The map y of Cold Storage is 56. The map z of Cold Storage is -1.
+The map x of Counterfeit Monkey is 54. The map y of Counterfeit Monkey is 42.
+The map x of Crawlspace is 81. The map y of Crawlspace is 42. The map z of Crawlspace is -1.
+The map x of Crew Cabin is 9. The map y of Crew Cabin is 7. The map page id of Crew Cabin is 1.
+The map x of Crumbling Wall Face is 36. The map y of Crumbling Wall Face is 42.
+The map x of Customs House is 72. The map y of Customs House is 42.
+The map x of Deep Street is 72. The map y of Deep Street is 56.
+The map x of Display Reloading Room is 108. The map y of Display Reloading Room is 49. The map z of Display Reloading Room is -1.
+The map x of Docks is 63. The map y of Docks is 42.
+The map x of Dormitory Room is 36. The map y of Dormitory Room is 70. The map z of Dormitory Room is 1.
+The map x of Equipment Archive is 108. The map y of Equipment Archive is 42. The map z of Equipment Archive is -1.
+The map x of Fair is 27. The map y of Fair is 63.
+The map x of Fish Market is 63. The map y of Fish Market is 49.
+The map x of Fleur d'Or Drinks Club is 45. The map y of Fleur d'Or Drinks Club is 70.
+The map x of Fleur d'Or Lobby is 54. The map y of Fleur d'Or Lobby is 70.
+The map x of Foredeck is 18. The map y of Foredeck is 7. The map z of Foredeck is 1. The map page id of Foredeck is 1.
+The map x of Foyer is 27. The map y of Foyer is 35.
+The map x of Galley is 9. The map y of Galley is 21. The map page id of Galley is 1.
+The map x of Generator Room is 126. The map y of Generator Room is 35. The map z of Generator Room is -1.
+The map x of Graduate Student Office is 90. The map y of Graduate Student Office is 91. The map z of Graduate Student Office is -1.
+The map x of Heritage Corner is 36. The map y of Heritage Corner is 63.
+The map x of Hesychius Street is 27. The map y of Hesychius Street is 49.
+The map x of Higgate's office is 72. The map y of Higgate's office is 105.
+The map x of High Street is 45. The map y of High Street is 56.
+The map x of Hostel is 45. The map y of Hostel is 63.
+The map x of Language Studies Department Office is 81. The map y of Language Studies Department Office is 105.
+The map x of Language Studies Seminar Room is 63. The map y of Language Studies Seminar Room is 105.
+The map x of Lecture Hall 1 is 99. The map y of Lecture Hall 1 is 84. The map z of Lecture Hall 1 is -1.
+The map x of Lecture Hall 2 is 99. The map y of Lecture Hall 2 is 91. The map z of Lecture Hall 2 is -1.
+The map x of Long Street North is 63. The map y of Long Street North is 70.
+The map x of Long Street South is 63. The map y of Long Street South is 77.
+The map x of Midway is 18. The map y of Midway is 63.
+The map x of Monumental Staircase is 36. The map y of Monumental Staircase is 56.
+The map x of My Apartment is 54. The map y of My Apartment is 91.
+The map x of Navigation Area is 18. The map y of Navigation Area is 14. The map z of Navigation Area is 1. The map page id of Navigation Area is 1.
+The map x of New Church is 9. The map y of New Church is 56.
+The map x of Old City Walls is 36. The map y of Old City Walls is 49.
+The map x of Old Hexagonal Turret is 45. The map y of Old Hexagonal Turret is 49.
+The map x of Open Sea is 126. The map y of Open Sea is 7. The map z of Open Sea is -3.
+The map x of Oracle Project is 99. The map y of Oracle Project is 35. The map z of Oracle Project is -1.
+The map x of Outdoor Cafe is 63. The map y of Outdoor Cafe is 56.
+The map x of Palm Square is 63. The map y of Palm Square is 84.
+The map x of Park Center is 27. The map y of Park Center is 56.
+The map x of Patriotic Chard-Garden is 36. The map y of Patriotic Chard-Garden is 35.
+The map x of Personal Apartment is 117. The map y of Personal Apartment is 28. The map z of Personal Apartment is -2.
+The map x of Precarious Perch is 126. The map y of Precarious Perch is 21. The map z of Precarious Perch is -2.
+The map x of Private Beach is 18. The map y of Private Beach is 28.
+The map x of Private Solarium is 126. The map y of Private Solarium is 28. The map z of Private Solarium is -2.
+The map x of Projection Booth is 9. The map y of Projection Booth is 42.
+The map x of Public Convenience is 99. The map y of Public Convenience is 70.
+The map x of Rectification Room is 81. The map y of Rectification Room is 84. The map z of Rectification Room is -1.
+The map x of Roget Close is 18. The map y of Roget Close is 42.
+The map x of Rotunda is 72. The map y of Rotunda is 70.
+The map x of Roundabout is 63. The map y of Roundabout is 63.
+The map x of Samuel Johnson Basement is 90. The map y of Samuel Johnson Basement is 84. The map z of Samuel Johnson Basement is -1.
+The map x of Samuel Johnson Hall is 72. The map y of Samuel Johnson Hall is 98.
+The map x of Screening Room is 9. The map y of Screening Room is 49.
+The map x of Sensitive Equipment Testing Room is 90. The map y of Sensitive Equipment Testing Room is 49. The map z of Sensitive Equipment Testing Room is -1.
+The map x of Shadow Chamber is 117. The map y of Shadow Chamber is 42. The map z of Shadow Chamber is -1.
+The map x of Sigil Street is 18. The map y of Sigil Street is 70.
+The map x of Slango's Bunk is 0. The map y of Slango's Bunk is 28. The map page id of Slango's Bunk is 1.
+The map x of Slango's Head is 0. The map y of Slango's Head is 35. The map page id of Slango's Head is 1.
+The map x of Sunning Deck is 18. The map y of Sunning Deck is 21. The map z of Sunning Deck is 1. The map page id of Sunning Deck is 1.
+The map x of Surveillance Room is 108. The map y of Surveillance Room is 35. The map z of Surveillance Room is -1.
+The map x of Tall Street is 72. The map y of Tall Street is 63.
+The map x of Tin Hut is 72. The map y of Tin Hut is 49.
+The map x of Tools Exhibit is 81. The map y of Tools Exhibit is 70.
+The map x of Traffic Circle is 54. The map y of Traffic Circle is 63.
+The map x of Tunnel through Chalk is 108. The map y of Tunnel through Chalk is 28. The map z of Tunnel through Chalk is -2.
+The map x of University Oval is 72. The map y of University Oval is 91.
+The map x of Waterstone's Office is 81. The map y of Waterstone's Office is 98.
+The map x of Webster Court is 27. The map y of Webster Court is 42.
+The map x of Winding Footpath is 18. The map y of Winding Footpath is 35.
+The map x of Wonderland is 99. The map y of Wonderland is 42. The map z of Wonderland is -1.
+The map x of Workshop is 117. The map y of Workshop is 35. The map z of Workshop is -1.
+The map x of Your Bunk is 18. The map y of Your Bunk is 28. The map page id of Your Bunk is 1.
+The map x of Your Head is 18. The map y of Your Head is 35. The map page id of Your Head is 1.
 
 Include Map Declarations by Counterfeit Monkey.
 

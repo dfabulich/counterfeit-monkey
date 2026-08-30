@@ -336,6 +336,8 @@ New first name is some text that varies. New first name is usually "nothing".
 
 After reading a command during identification (this is the parse identification rule):
 	unless the player's command matches "restore":
+		if the player's command includes "warp":
+			say "[bracket]WarpDBG identification-swallowed cmd=[player's command][close bracket][line break]";
 		if stored first name is "nothing":
 			now stored first name is the player's command;
 			now stored first name is stored first name in sentence case;

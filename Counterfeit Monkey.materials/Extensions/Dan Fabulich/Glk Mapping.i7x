@@ -563,7 +563,6 @@ To paste the glulx map hyperlink replacement command:
 First glulx input handling rule when the current event is a map event (this is the handle map event rule):
 	if the current map event is a hyperlink event:
 		follow the map hyperlink command rules for the current map link id;
-		paste the glulx map hyperlink replacement command;
 		request map events;
 		rule succeeds;
 	if the current map event is a user-hide event:

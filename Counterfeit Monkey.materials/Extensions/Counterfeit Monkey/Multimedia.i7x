@@ -51,6 +51,14 @@ When play begins (this is the open the measuring window rule):
 	if glulx graphics is supported:
 		open the measuring window.
 
+A first when play begins rule (this is the defer automap until identification rule):
+	[GGRecoverObjects can run before play begins; default automap enabled is false.
+	 Re-assert here so no refresh presents the map during Identification.]
+	if glk mapping is supported:
+		now automap enabled is false;
+		close the map;
+		cancel map events.
+
 Map-ratio is a real number that varies.
 Map-ratio is initially 0.8395. [I guess this is how we do "constants" in Inform 7.]
 
@@ -76,7 +84,7 @@ To adjust width of the graphics window:
 When identification ends (this is the open the graphics window rule):
 	if glk mapping is supported:
 		unless graphics is disabled:
-			show the map at user request;
+			prepare the glk automap with room hyperlinks;
 		else:
 			now automap enabled is false;
 	otherwise if glulx graphics is supported:
@@ -852,6 +860,24 @@ Section - Map debug commands
 
 [Kept in Multimedia (not Tests) so they survive ni -release builds used for Spatterlight.]
 
+To prepare the glk automap with room hyperlinks:
+	[Enable overlay link ids and present via refresh. Spatterlight shows the map
+	 only if the player has not closed it (userHidMap); latent updates otherwise.]
+	now automap enabled is true;
+	now automap hyperlinks enabled is true;
+	refresh the automap.
+
+To show the glk automap with room hyperlinks at user request:
+	now automap hyperlinks enabled is true;
+	refresh the automap;
+	show the map at user request.
+
+Understand "debug hyperlinks" as reporting automap hyperlink state.
+Reporting automap hyperlink state is an action out of world applying to nothing.
+Carry out reporting automap hyperlink state:
+	let L be the automap dense room id of the location;
+	say "[bracket]hyperlinks=[automap hyperlinks enabled] last-painted=[automap hyperlinks last painted] dense=[L][close bracket][line break]".
+
 Understand "reveal map" or "map reveal" or "see all map" as revealing the automap.
 Revealing the automap is an action out of world.
 
@@ -879,6 +905,44 @@ Carry out warping to the galley:
 	move the player to the Galley, without printing a room description;
 	try looking;
 	refresh the automap.
+
+Understand "warp shore" or "warp abandoned shore" or "debug shore" as warping to the abandoned shore.
+Warping to the abandoned shore is an action out of world.
+
+Carry out warping to the abandoned shore:
+	say "[bracket]WarpDBG carry-out start loc=[location][close bracket][line break]";
+	if Landing is happening:
+		say "[bracket]WarpDBG landing-state=happening[close bracket][line break]";
+	otherwise if Landing has happened:
+		say "[bracket]WarpDBG landing-state=done[close bracket][line break]";
+	otherwise:
+		say "[bracket]WarpDBG landing-state=none[close bracket][line break]";
+	if Identification is happening:
+		say "[bracket]WarpDBG identification=active[close bracket][line break]";
+	now the letter-remover is creature-enabled;
+	now the letter-remover is upgraded;
+	now the backpack is handled;
+	now the secret-plans are seen;
+	now Slango is seen;
+	now the Counterfeit Monkey is visited;
+	if the player does not enclose the backpack:
+		now the player carries the backpack;
+	if the player does not enclose the letter-remover:
+		now the player carries the letter-remover;
+	if the player does not enclose the rock:
+		now the player carries the rock;
+	if Landing is not happening and Landing has not happened:
+		now the story viewpoint is first person singular;
+		move the player to Precarious Perch, without printing a room description;
+		follow the scene changing rules;
+		if Landing is happening:
+			say "[bracket]WarpDBG landing-armed[close bracket][line break]";
+		otherwise:
+			say "[bracket]WarpDBG landing-arm-failed[close bracket][line break]";
+	move the player to Abandoned Shore, without printing a room description;
+	try looking;
+	refresh the automap;
+	say "[bracket]WarpDBG carry-out end loc=[location][close bracket][line break]".
 
 
 Chapter 2 - Sounds

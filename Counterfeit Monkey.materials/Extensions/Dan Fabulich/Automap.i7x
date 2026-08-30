@@ -1,4 +1,4 @@
-Version 1/260827 of Automap (for Glulx only) by Dan Fabulich begins here.
+Version 1/260829 of Automap (for Glulx only) by Dan Fabulich begins here.
 
 "Displays a map of rooms that reveals itself as you play (fog of war)."
 
@@ -12,12 +12,15 @@ Part - Model
 
 Chapter - Geometry and pages
 
-[Abstract map units (not pixels). Rooms with map width 0 are omitted from the map.]
+[Abstract map units (not pixels). Unplaced rooms (default x/y) or zero-size rooms are omitted.]
 
-A room has a number called map x. The map x of a room is usually 0.
-A room has a number called map y. The map y of a room is usually 0.
-A room has a number called map width. The map width of a room is usually 0.
-A room has a number called map height. The map height of a room is usually 0.
+The automap unplaced coordinate is always -9999.
+
+A room has a number called map x. The map x of a room is usually the automap unplaced coordinate.
+A room has a number called map y. The map y of a room is usually the automap unplaced coordinate.
+A room has a number called map z. The map z of a room is usually 0.
+A room has a number called map width. The map width of a room is usually 6.
+A room has a number called map height. The map height of a room is usually 4.
 
 [Pages: only rooms on the active page are drawn. Switch pages (and full-rebuild)
 when the player enters a room on another page.]
@@ -29,30 +32,14 @@ Automap scale is a number that varies. Automap scale is 20.
 
 Automap enabled is a truth state that varies. Automap enabled is initially true.
 
+Automap opening hint enabled is a truth state that varies. Automap opening hint enabled is initially true.
+
 Automap hyperlinks enabled is a truth state that varies. Automap hyperlinks enabled is initially false.
 Automap hyperlinks last painted is a truth state that varies. Automap hyperlinks last painted is initially false.
 
-[If a table of geometry is present, it takes precedence over any per-room
-map x/map y/map width/map height declarations.]
-Table of Automap Geometry
-geo-room (a room)	map-x (a number)	map-y (a number)	map-w (a number)	map-h (a number)	page-id (a number)
-with 1 blank row.
-
-[Copy table rows onto room properties once.]
-To apply the automap geometry table:
-	repeat through the Table of Automap Geometry:
-		if there is a geo-room entry:
-			let subject be the geo-room entry;
-			now the map x of subject is the map-x entry;
-			now the map y of subject is the map-y entry;
-			now the map width of subject is the map-w entry;
-			now the map height of subject is the map-h entry;
-			if there is a page-id entry:
-				now the map page id of subject is the page-id entry;
-			else:
-				now the map page id of subject is 0.
-
 To decide whether (subject - a room) has automap geometry:
+	if the map x of subject is the automap unplaced coordinate, no;
+	if the map y of subject is the automap unplaced coordinate, no;
 	if the map width of subject > 0 and the map height of subject > 0, yes;
 	no.
 
@@ -68,6 +55,26 @@ To sync the automap page from the location:
 			invalidate the automap base geometry;
 			mark the automap full rebuild needed because "page-change".
 
+[Rooms whose map z differs from the player's are drawn dimmed. Changing floors
+reinstalls room cards whose appearance is stale (dim / here); connectors stay.]
+To sync the automap z from previous locations:
+	unless the location is a room, stop;
+	repeat with prev running through the automap previous locations:
+		if prev is a room and the map z of prev is not the map z of the location:
+			repeat with subject running through rooms:
+				if the automap overlay id of subject > 0:
+					if subject has a stale automap appearance:
+						discover the automap appearance of subject;
+						install the automap room overlay for subject;
+						repeat with way running through {up, down, inside, outside}:
+							install the automap badge from subject for way;
+			stop.
+
+To decide whether (subject - a room) is automap-dimmed:
+	if subject is the location, no;
+	if the map z of subject is the map z of the location, no;
+	yes.
+
 To decide whether (subject - a room) is map-visible:
 	if subject is on the automap:
 		if subject is visited, yes;
@@ -77,23 +84,40 @@ To decide whether (subject - a room) is map-visible:
 
 Chapter - Fog and appearance
 
-[A room is map-named once the player has seen it in light; until then dark rooms read "Darkness".]
+[map-named: author/debug helper — room seen in light via going or explicit mark.
+ Labels come from the status line ([player's surroundings]), stored separately.]
 A room can be map-named.
 
 [Last appearance we pushed to the host for this room.]
 A room can be automap-drawn-dark.
 A room can be automap-drawn-named.
 A room can be automap-drawn-here.
+A room can be automap-drawn-dimmed.
 A room can be automap-discovered.
 A room has a text called automap drawn label.
 
 To decide what text is the automap label of (subject - a room):
-	if subject is automap-drawn-named, decide on the printed name of subject;
-	decide on "Darkness".
+	if the automap drawn label of subject is not "", decide on the automap drawn label of subject;
+	decide on "".
 
-[Freeze what the map has "discovered" for subject from live world state. Only call
- when the player is in subject (or on reveal / first show of that room).]
+[Same text the status line uses for [player's surroundings] / SL_Location.]
+To capture the automap status label for (subject - a room):
+	unless subject is a room, stop;
+	unless subject is the location, stop;
+	unless subject has automap geometry, stop;
+	now the automap drawn label of subject is the substituted form of "[player's surroundings]".
+
+[Freeze what the map has "discovered" for subject from live world state. Capture the
+ status-line label when the player is in subject; for other rooms (teleport transit,
+ REVEAL) fill an empty label from printed name / Darkness without inventing visits.]
 To discover the automap appearance of (subject - a room):
+	if subject is the location:
+		capture the automap status label for subject;
+	otherwise if the automap drawn label of subject is "":
+		if subject is map-named or (subject is visited and subject is not dark):
+			now the automap drawn label of subject is the printed name of subject;
+		otherwise if subject is visited and subject is dark:
+			now the automap drawn label of subject is "Darkness";
 	if subject is dark:
 		now subject is automap-drawn-dark;
 	else:
@@ -106,13 +130,32 @@ To discover the automap appearance of (subject - a room):
 		now subject is automap-drawn-here;
 	else:
 		now subject is not automap-drawn-here;
-	now the automap drawn label of subject is the automap label of subject;
+	if subject is automap-dimmed:
+		now subject is automap-drawn-dimmed;
+	else:
+		now subject is not automap-drawn-dimmed;
 	now subject is automap-discovered.
 
 To discover all visible automap rooms:
 	repeat with subject running through rooms:
 		if subject is map-visible:
 			discover the automap appearance of subject.
+
+[Mark a room visited for fog-of-war (like arriving there). Sets map-named only when
+ the room is lit. Queues it for the next incremental refresh.]
+To reveal (R - a room) on the automap:
+	unless R is a room, stop;
+	now R is visited;
+	if R is not dark:
+		now R is map-named;
+	note automap previous location R.
+
+[Reveal every room currently on the automap page (has geometry and matching page id).
+ Rooms on other pages are unchanged.]
+To reveal all rooms on the automap:
+	repeat with subject running through rooms:
+		if subject is on the automap:
+			reveal subject on the automap.
 
 To decide whether (subject - a room) has a stale automap appearance:
 	[Compare live discovery to frozen drawn — only meaningful for rooms we
@@ -123,7 +166,14 @@ To decide whether (subject - a room) has a stale automap appearance:
 	if subject is not map-named and subject is automap-drawn-named, yes;
 	if subject is the location and subject is not automap-drawn-here, yes;
 	if subject is not the location and subject is automap-drawn-here, yes;
-	if the automap label of subject is not the automap drawn label of subject, yes;
+	if subject is automap-dimmed and subject is not automap-drawn-dimmed, yes;
+	if subject is automap-drawn-dimmed:
+		unless subject is automap-dimmed, yes;
+	if subject is the location:
+		let live label be the substituted form of "[player's surroundings]";
+		if live label is not the automap drawn label of subject, yes;
+	otherwise if subject is map-named:
+		if the automap drawn label of subject is not the printed name of subject, yes;
 	no.
 
 
@@ -172,6 +222,20 @@ A direction has a direction called mapped bearing.
 To decide whether (way - a direction) is a standard compass direction:
 	if way is north or way is south or way is east or way is west, yes;
 	if way is northeast or way is northwest or way is southeast or way is southwest, yes;
+	no.
+
+[True for 90° (axis-aligned) and 45° (equal abs deltas) connectors; those stay
+straight lines. All other spans use Bezier curves (or author bends).]
+To decide whether (start-x - a number) and (start-y - a number) to (end-x - a number) and (end-y - a number) forms a straight diagonal:
+	let delta-x be end-x - start-x;
+	let delta-y be end-y - start-y;
+	if delta-x < 0, now delta-x is 0 - delta-x;
+	if delta-y < 0, now delta-y is 0 - delta-y;
+	if delta-x < 1:
+		if delta-y < 1, decide no;
+		yes;
+	if delta-y < 1, yes;
+	if delta-x is delta-y, yes;
 	no.
 
 To apply the automap bearings table:
@@ -375,6 +439,8 @@ To decide what number is AM badge kind out: (- AM_BADGE_KIND_OUT -).
 To decide what number is AM badge kind up: (- AM_BADGE_KIND_UP -).
 To decide what number is AM badge kind down: (- AM_BADGE_KIND_DOWN -).
 
+To decide what number is AM connector view pad: (- AM_CONNECTOR_VIEW_PAD -).
+
 
 To set the automap connector overlay at dense (dense-room-id - a number) way (way-index - a number) to (value - a number):
 	(- AM_SetConnectorOverlayId({dense-room-id}, {way-index}, {value}); -).
@@ -409,18 +475,101 @@ To clear the automap badge index at dense (dense-room-id - a number) way (way-in
 To forget all automap badge overlays:
 	(- AM_ForgetAllBadges(); -).
 
+
+Chapter - Bent connectors
+
+[Optional author waypoints for a connector.
+ Stored in map units like map x / map y; ignored when absent.]
+
+Table of Automap Connector Midpoints
+link-room (a room)	link-way (a direction)	sequence (a number)	mid-x (a number)	mid-y (a number)
+with 32 blank rows.
+
+To clear the automap connector midpoints from (subject - a room) via (way - a direction):
+	repeat through the Table of Automap Connector Midpoints:
+		if there is a link-room entry:
+			if the link-room entry is subject and the link-way entry is way:
+				blank out the whole row.
+
+To add an automap connector midpoint (mx - a number) and (my - a number) from (subject - a room) via (way - a direction) at sequence (seq - a number):
+	choose a blank row in the Table of Automap Connector Midpoints;
+	now link-room entry is subject;
+	now link-way entry is way;
+	now sequence entry is seq;
+	now mid-x entry is mx;
+	now mid-y entry is my.
+
+To decide what number is the automap connector midpoint count from (subject - a room) via (way - a direction):
+	let tally be 0;
+	repeat through the Table of Automap Connector Midpoints:
+		if there is a link-room entry:
+			if the link-room entry is subject and the link-way entry is way:
+				increase tally by 1;
+	decide on tally.
+
+To decide what number is the automap connector midpoint x from (subject - a room) via (way - a direction) index (n - a number):
+	repeat through the Table of Automap Connector Midpoints:
+		if there is a link-room entry:
+			if the link-room entry is subject and the link-way entry is way:
+				if the sequence entry is n:
+					decide on the mid-x entry;
+	decide on 0.
+
+To decide what number is the automap connector midpoint y from (subject - a room) via (way - a direction) index (n - a number):
+	repeat through the Table of Automap Connector Midpoints:
+		if there is a link-room entry:
+			if the link-room entry is subject and the link-way entry is way:
+				if the sequence entry is n:
+					decide on the mid-y entry;
+	decide on 0.
+
+To decide what number is the map pixel x of automap midpoint (mx - a number):
+	decide on mx * automap scale.
+
+To decide what number is the map pixel y of automap midpoint (my - a number):
+	decide on my * automap scale.
+
+To bend the automap connector from (subject - a room) via (way - a direction) through (first-x - a number) and (first-y - a number):
+	clear the automap connector midpoints from subject via way;
+	add an automap connector midpoint first-x and first-y from subject via way at sequence 1;
+	mark the automap full rebuild needed because "bent-connector".
+
+To bend the automap connector from (subject - a room) via (way - a direction) through (first-x - a number) and (first-y - a number) and (second-x - a number) and (second-y - a number):
+	clear the automap connector midpoints from subject via way;
+	add an automap connector midpoint first-x and first-y from subject via way at sequence 1;
+	add an automap connector midpoint second-x and second-y from subject via way at sequence 2;
+	mark the automap full rebuild needed because "bent-connector".
+
+To bend the automap connector from (subject - a room) via (way - a direction) through (first-x - a number) and (first-y - a number) and (second-x - a number) and (second-y - a number) and (third-x - a number) and (third-y - a number):
+	clear the automap connector midpoints from subject via way;
+	add an automap connector midpoint first-x and first-y from subject via way at sequence 1;
+	add an automap connector midpoint second-x and second-y from subject via way at sequence 2;
+	add an automap connector midpoint third-x and third-y from subject via way at sequence 3;
+	mark the automap full rebuild needed because "bent-connector".
+
+To bend the automap connector from (subject - a room) via (way - a direction) through (first-x - a number) and (first-y - a number) and (second-x - a number) and (second-y - a number) and (third-x - a number) and (third-y - a number) and (fourth-x - a number) and (fourth-y - a number):
+	clear the automap connector midpoints from subject via way;
+	add an automap connector midpoint first-x and first-y from subject via way at sequence 1;
+	add an automap connector midpoint second-x and second-y from subject via way at sequence 2;
+	add an automap connector midpoint third-x and third-y from subject via way at sequence 3;
+	add an automap connector midpoint fourth-x and fourth-y from subject via way at sequence 4;
+	mark the automap full rebuild needed because "bent-connector".
+
+
 To decide whether (subject - a room) has a live automap badge for (way - a direction):
 	unless way is a badge direction, no;
 	unless subject is map-visible, no;
 	let dest be the room way from subject;
-	if dest is a room and dest is on the automap, yes;
+	if dest is a room and dest has automap geometry, yes;
 	no.
 
 
 To decide what number is the live automap connector kind from (subject - a room) for (way - a direction):
 	unless subject is map-visible, decide on AM connector kind none;
 	let dest be the room way from subject;
-	unless dest is a room and dest is on the automap, decide on AM connector kind none;
+	unless dest is a room, decide on AM connector kind none;
+	unless dest has automap geometry, decide on AM connector kind stub;
+	if dest is subject, decide on AM connector kind stub;
 	if way is a badge direction:
 		unless dest is map-visible, decide on AM connector kind none;
 		if subject has a compass twin to dest, decide on AM connector kind none;
@@ -691,39 +840,89 @@ Include (-
   AM_AddLit("~ stroke=~"); AM_AddHexColor(color);
   AM_AddLit("~ stroke-width=~2~ opacity=~0.86~/>");
 ];
-[ AM_EmitArrow tip_x tip_y way_code color half_size;
-  ! way_code: 0=N 1=S 2=E 3=W else circle
-  half_size = 5;
-  if (way_code == 0) {
-    AM_AddLit("<polygon points=~");
-    AM_AddNum(tip_x); AM_AddLit(","); AM_AddNum(tip_y); AM_AddLit(" ");
-    AM_AddNum(tip_x-half_size); AM_AddLit(","); AM_AddNum(tip_y+half_size); AM_AddLit(" ");
-    AM_AddNum(tip_x+half_size); AM_AddLit(","); AM_AddNum(tip_y+half_size);
-    AM_AddLit("~ fill=~"); AM_AddHexColor(color); AM_AddLit("~ opacity=~0.86~/>");
-  } else if (way_code == 1) {
-    AM_AddLit("<polygon points=~");
-    AM_AddNum(tip_x); AM_AddLit(","); AM_AddNum(tip_y); AM_AddLit(" ");
-    AM_AddNum(tip_x-half_size); AM_AddLit(","); AM_AddNum(tip_y-half_size); AM_AddLit(" ");
-    AM_AddNum(tip_x+half_size); AM_AddLit(","); AM_AddNum(tip_y-half_size);
-    AM_AddLit("~ fill=~"); AM_AddHexColor(color); AM_AddLit("~ opacity=~0.86~/>");
-  } else if (way_code == 2) {
-    AM_AddLit("<polygon points=~");
-    AM_AddNum(tip_x); AM_AddLit(","); AM_AddNum(tip_y); AM_AddLit(" ");
-    AM_AddNum(tip_x-half_size); AM_AddLit(","); AM_AddNum(tip_y-half_size); AM_AddLit(" ");
-    AM_AddNum(tip_x-half_size); AM_AddLit(","); AM_AddNum(tip_y+half_size);
-    AM_AddLit("~ fill=~"); AM_AddHexColor(color); AM_AddLit("~ opacity=~0.86~/>");
-  } else if (way_code == 3) {
-    AM_AddLit("<polygon points=~");
-    AM_AddNum(tip_x); AM_AddLit(","); AM_AddNum(tip_y); AM_AddLit(" ");
-    AM_AddNum(tip_x+half_size); AM_AddLit(","); AM_AddNum(tip_y-half_size); AM_AddLit(" ");
-    AM_AddNum(tip_x+half_size); AM_AddLit(","); AM_AddNum(tip_y+half_size);
-    AM_AddLit("~ fill=~"); AM_AddHexColor(color); AM_AddLit("~ opacity=~0.86~/>");
-  } else {
+! Arrowhead size matches badge up/down triangles (height 8, half-base 4).
+Constant AM_ARROW_DEPTH = 8;
+Constant AM_ARROW_HALF = 4;
+! Connector overlay pad must fit arrow wings (diagonal extent ~9px from tip).
+Constant AM_CONNECTOR_VIEW_PAD = 10;
+[ AM_EmitArrow tip_x tip_y way_code color;
+  ! way_code: 0=N 1=S 2=E 3=W 4=NE 5=SE 6=SW 7=NW else circle
+  ! Large unit vectors keep integer division accurate for diagonals.
+  if (way_code == 0) AM_EmitArrowVector(tip_x, tip_y, 0, -100, color);
+  else if (way_code == 1) AM_EmitArrowVector(tip_x, tip_y, 0, 100, color);
+  else if (way_code == 2) AM_EmitArrowVector(tip_x, tip_y, 100, 0, color);
+  else if (way_code == 3) AM_EmitArrowVector(tip_x, tip_y, -100, 0, color);
+  else if (way_code == 4) AM_EmitArrowVector(tip_x, tip_y, 100, -100, color);
+  else if (way_code == 5) AM_EmitArrowVector(tip_x, tip_y, 100, 100, color);
+  else if (way_code == 6) AM_EmitArrowVector(tip_x, tip_y, -100, 100, color);
+  else if (way_code == 7) AM_EmitArrowVector(tip_x, tip_y, -100, -100, color);
+  else {
     AM_AddLit("<circle cx=~"); AM_AddNum(tip_x);
     AM_AddLit("~ cy=~"); AM_AddNum(tip_y);
     AM_AddLit("~ r=~3~ fill=~"); AM_AddHexColor(color);
     AM_AddLit("~ opacity=~0.86~/>");
   }
+];
+Global AM_bent_sx = 0; Global AM_bent_sy = 0; Global AM_bent_ex = 0; Global AM_bent_ey = 0;
+Global AM_bent_count = 0;
+Array AM_bent_mids_x --> 4;
+Array AM_bent_mids_y --> 4;
+[ AM_EmitStoredBentCubic color count c0x c0y c1x c1y;
+  count = AM_bent_count;
+  c0x = AM_bent_sx; c0y = AM_bent_sy;
+  c1x = AM_bent_ex; c1y = AM_bent_ey;
+  if (count >= 1) {
+    c0x = AM_bent_mids_x-->0; c0y = AM_bent_mids_y-->0;
+    c1x = c0x; c1y = c0y;
+  }
+  if (count >= 2) {
+    c1x = AM_bent_mids_x-->(count - 1);
+    c1y = AM_bent_mids_y-->(count - 1);
+  }
+  AM_EmitCubic(AM_bent_sx, AM_bent_sy, c0x, c0y, c1x, c1y, AM_bent_ex, AM_bent_ey, color);
+];
+[ AM_SetBentMidpoint seq mx my;
+  if (seq < 1 || seq > 4) return;
+  AM_bent_mids_x-->(seq - 1) = mx;
+  AM_bent_mids_y-->(seq - 1) = my;
+];
+[ AM_DivRound num den;
+  ! Signed divide rounded to nearest (den must be non-zero).
+  if (den < 0) { num = -num; den = -den; }
+  if (num >= 0) return (num + den / 2) / den;
+  return -((-num + den / 2) / den);
+];
+[ AM_EmitArrowVector tip_x tip_y dx dy color depth half_w len ax ay back_x back_y perp_x perp_y;
+  ! Same isosceles triangle in every direction (Euclidean), sized like badge arrows.
+  depth = AM_ARROW_DEPTH;
+  half_w = AM_ARROW_HALF;
+  ax = dx; if (ax < 0) ax = -ax;
+  ay = dy; if (ay < 0) ay = -ay;
+  if (ax < 1 && ay < 1) {
+    AM_AddLit("<circle cx=~"); AM_AddNum(tip_x);
+    AM_AddLit("~ cy=~"); AM_AddNum(tip_y);
+    AM_AddLit("~ r=~3~ fill=~"); AM_AddHexColor(color);
+    AM_AddLit("~ opacity=~0.86~/>");
+    return;
+  }
+  ! Scale tiny vectors so ISqrt/division stay accurate (e.g. dx=dy=1 → len 1).
+  if (ax < 64 && ay < 64) {
+    dx = dx * 64; dy = dy * 64;
+    ax = ax * 64; ay = ay * 64;
+  }
+  if (ax > 20000) { dx = AM_DivRound(dx * 20000, ax); ax = 20000; }
+  if (ay > 20000) { dy = AM_DivRound(dy * 20000, ay); ay = 20000; }
+  len = AM_ISqrt(ax * ax + ay * ay);
+  if (len < 1) len = 1;
+  back_x = tip_x - AM_DivRound(dx * depth, len);
+  back_y = tip_y - AM_DivRound(dy * depth, len);
+  perp_x = AM_DivRound((-dy) * half_w, len);
+  perp_y = AM_DivRound(dx * half_w, len);
+  AM_AddLit("<polygon points=~");
+  AM_AddNum(tip_x); AM_AddLit(","); AM_AddNum(tip_y); AM_AddLit(" ");
+  AM_AddNum(back_x + perp_x); AM_AddLit(","); AM_AddNum(back_y + perp_y); AM_AddLit(" ");
+  AM_AddNum(back_x - perp_x); AM_AddLit(","); AM_AddNum(back_y - perp_y);
+  AM_AddLit("~ fill=~"); AM_AddHexColor(color); AM_AddLit("~ opacity=~0.86~/>");
 ];
 Constant AM_ROOM_CORNER_RADIUS = 4;
 [ AM_CornerPortInset;
@@ -819,7 +1018,7 @@ Global AM_label_truncated = 0;
 ];
 [ AM_EmitWrappedLabel center_x center_y box_width box_height fill txt
   font_size max_width max_chars max_lines line_height start_y line_index from length char_index;
-  font_size = 11;
+  font_size = 13;
   max_width = box_width - AM_LABEL_PADDING;
   if (max_width < 24) max_width = 24;
   max_chars = (max_width * 100) / (font_size * AM_LABEL_CHAR_WIDTH_EM100);
@@ -895,6 +1094,21 @@ To append svg cubic from (start-x - a number) and (start-y - a number) via (cont
 
 To append svg line from (start-x - a number) and (start-y - a number) to (end-x - a number) and (end-y - a number) color (color - a number):
 	(- AM_EmitLine({start-x}, {start-y}, {end-x}, {end-y}, {color}); -).
+
+
+To emit the stored automap bent connector svg color (color - a number):
+	(- AM_EmitStoredBentCubic({color}); -).
+
+
+To stage the stored automap bent connector from (start-x - a number) and (start-y - a number) to (end-x - a number) and (end-y - a number) with (mid-count - a number) mids:
+	(- AM_bent_sx = {start-x}; AM_bent_sy = {start-y}; AM_bent_ex = {end-x}; AM_bent_ey = {end-y}; AM_bent_count = {mid-count}; -).
+
+To set automap bent midpoint (seq - a number) to (mx - a number) and (my - a number):
+	(- AM_SetBentMidpoint({seq}, {mx}, {my}); -).
+
+
+To append svg arrow at (tip-x - a number) and (tip-y - a number) for vector (dx - a number) and (dy - a number) color (color - a number):
+	(- AM_EmitArrowVector({tip-x}, {tip-y}, {dx}, {dy}, {color}); -).
 
 
 To append svg arrow at (tip-x - a number) and (tip-y - a number) way-code (way - a number) color (color - a number):
@@ -1252,11 +1466,15 @@ Chapter - Scene composers
 
 To append the arrow svg at (tip-x - a number) and (tip-y - a number) for (way - a direction) in (color - a number):
 	let way-facing be the map facing of way;
-	let way-code be 4;
+	let way-code be 8;
 	if way-facing is north, now way-code is 0;
 	if way-facing is south, now way-code is 1;
 	if way-facing is east, now way-code is 2;
 	if way-facing is west, now way-code is 3;
+	if way-facing is northeast, now way-code is 4;
+	if way-facing is southeast, now way-code is 5;
+	if way-facing is southwest, now way-code is 6;
+	if way-facing is northwest, now way-code is 7;
 	append svg arrow at tip-x and tip-y way-code way-code color color.
 
 [Paper disc + ink stroke; I/O glyphs and Up/Down triangles (PR #170).]
@@ -1293,13 +1511,18 @@ To append the automap normal room svg for (subject - a room):
 		now fill-color is here-fill;
 		now stroke-color is here-stroke;
 		now label-color is here-label;
+	[Off-level: wrap card + label (+ dark corner) so everything dims together.]
+	if subject is automap-dimmed:
+		append svg lit "<g opacity='0.35'>";
 	append svg room rect at pixel-x and pixel-y size pixel-width by pixel-height fill fill-color stroke stroke-color width-tenths stroke-tenths;
 	if subject is automap-drawn-dark:
 		append svg dark corner at pixel-x and pixel-y size pixel-width by pixel-height color ink;
 	let center-x be pixel-x + (pixel-width / 2);
 	let center-y be pixel-y + (pixel-height / 2);
 	let label be the automap label of subject;
-	append svg wrapped label label at center-x and center-y size pixel-width by pixel-height color label-color.
+	append svg wrapped label label at center-x and center-y size pixel-width by pixel-height color label-color;
+	if subject is automap-dimmed:
+		append svg lit "</g>".
 
 
 Part - Runtime
@@ -1374,7 +1597,24 @@ Automap full rebuild needed is a truth state that varies. Automap full rebuild n
 Automap base map ready is a truth state that varies. Automap base map ready is initially false.
 [The base geometry includes the viewbox and the dense room IDs.]
 Automap base geometry ready is a truth state that varies. Automap base geometry ready is initially false.
-The automap previous location is an object that varies.
+[Rooms to resync after movement. Usually one prior room; teleports / multi-hop
+ turns may queue several (going origin/dest plus any newly visited map rooms).]
+The automap previous locations is a list of objects that varies.
+
+To note automap previous location (R - an object):
+	if R is a room and R has automap geometry:
+		unless R is listed in the automap previous locations:
+			add R to the automap previous locations.
+
+To gather newly visited automap previous locations:
+	[Silent teleports mark visited without going; pick those up at refresh.]
+	repeat with subject running through rooms:
+		if subject is map-visible and subject is visited and subject is not automap-discovered:
+			note automap previous location subject.
+
+To reset automap previous locations to the current room:
+	truncate the automap previous locations to 0 entries;
+	note automap previous location the location.
 
 To mark the automap full rebuild needed:
 	now automap full rebuild needed is true.
@@ -1451,7 +1691,11 @@ To install the automap badge from (subject - a room) for (way - a direction):
 	let view-height be margin + margin;
 	clear the automap svg buffer;
 	append svg open viewBox min-x view-left min-y view-top width view-width height view-height;
+	if subject is automap-dimmed:
+		append svg lit "<g opacity='0.35'>";
 	append the badge disc at badge-x and badge-y for way;
+	if subject is automap-dimmed:
+		append svg lit "</g>";
 	append svg lit "</svg>";
 	let draw-left be view-left - the automap view origin x;
 	let draw-top be view-top - the automap view origin y;
@@ -1500,6 +1744,34 @@ To decide what number is the am-max of (first-value - a number) and (second-valu
 	if first-value > second-value, decide on first-value;
 	decide on second-value.
 
+To extend automap overlay bounds with bent connector midpoints from (subject - a room) via (way - a direction):
+	let mid-count be the automap connector midpoint count from subject via way;
+	if mid-count < 1, stop;
+	repeat with seq running from 1 to mid-count:
+		let mx be the automap connector midpoint x from subject via way index seq;
+		let my be the automap connector midpoint y from subject via way index seq;
+		extend automap overlay bounds with x (the map pixel x of automap midpoint mx) and y (the map pixel y of automap midpoint my).
+
+To append the bent automap connector from (start-x - a number) and (start-y - a number) to (end-x - a number) and (end-y - a number) from (subject - a room) via (way - a direction) color (color - a number) drawing arrow (draw-arrow - a truth state):
+	let mid-count be the automap connector midpoint count from subject via way;
+	stage the stored automap bent connector from start-x and start-y to end-x and end-y with mid-count mids;
+	repeat with seq running from 1 to mid-count:
+		let mx be the automap connector midpoint x from subject via way index seq;
+		let my be the automap connector midpoint y from subject via way index seq;
+		set automap bent midpoint seq to (the map pixel x of automap midpoint mx) and (the map pixel y of automap midpoint my);
+	emit the stored automap bent connector svg color color;
+	if draw-arrow is false, stop;
+	let prev-x be start-x;
+	let prev-y be start-y;
+	if mid-count >= 1:
+		let last-mx be the automap connector midpoint x from subject via way index mid-count;
+		let last-my be the automap connector midpoint y from subject via way index mid-count;
+		now prev-x is the map pixel x of automap midpoint last-mx;
+		now prev-y is the map pixel y of automap midpoint last-my;
+	let arrow-dx be end-x - prev-x;
+	let arrow-dy be end-y - prev-y;
+	append svg arrow at end-x and end-y for vector arrow-dx and arrow-dy color color.
+
 To append the automap connector primitives from (subject - a room) for (way - a direction) of kind (kind - a number):
 	let connector-color be the automap connector color;
 	let stub-color be the automap stub color;
@@ -1520,14 +1792,24 @@ To append the automap connector primitives from (subject - a room) for (way - a 
 		let start-y be the port y of subject for way-facing;
 		let end-x be the port x of dest for back-facing;
 		let end-y be the port y of dest for back-facing;
-		let dist be the bezier span of start-x and start-y to end-x and end-y;
-		let control1-x be the bezier assister x of subject for way-facing span dist;
-		let control1-y be the bezier assister y of subject for way-facing span dist;
-		let control2-x be the bezier assister x of dest for back-facing span dist;
-		let control2-y be the bezier assister y of dest for back-facing span dist;
-		append svg cubic from start-x and start-y via control1-x and control1-y and control2-x and control2-y to end-x and end-y color connector-color;
+		let mid-count be the automap connector midpoint count from subject via way;
+		if mid-count > 0:
+			let draw-arrow be false;
+			unless the room back from dest is subject:
+				now draw-arrow is true;
+			append the bent automap connector from start-x and start-y to end-x and end-y from subject via way color connector-color drawing arrow draw-arrow;
+		else if start-x and start-y to end-x and end-y forms a straight diagonal:
+			append svg line from start-x and start-y to end-x and end-y color connector-color;
+		else:
+			let dist be the bezier span of start-x and start-y to end-x and end-y;
+			let control1-x be the bezier assister x of subject for way-facing span dist;
+			let control1-y be the bezier assister y of subject for way-facing span dist;
+			let control2-x be the bezier assister x of dest for back-facing span dist;
+			let control2-y be the bezier assister y of dest for back-facing span dist;
+			append svg cubic from start-x and start-y via control1-x and control1-y and control2-x and control2-y to end-x and end-y color connector-color;
 		unless the room back from dest is subject:
-			append the arrow svg at end-x and end-y for way-facing in connector-color;
+			if mid-count is 0:
+				append the arrow svg at end-x and end-y for way-facing in connector-color;
 	else:
 		let dest be the room way from subject;
 		let back be the badge opposite of way;
@@ -1535,10 +1817,27 @@ To append the automap connector primitives from (subject - a room) for (way - a 
 		let start-y be the badge y of subject for way;
 		let end-x be the arrival badge x on dest facing subject for back;
 		let end-y be the arrival badge y on dest facing subject for back;
-		append svg line from start-x and start-y to end-x and end-y color connector-color;
+		let mid-count be the automap connector midpoint count from subject via way;
+		if mid-count > 0:
+			let draw-arrow be false;
+			unless the room back from dest is subject:
+				now draw-arrow is true;
+			append the bent automap connector from start-x and start-y to end-x and end-y from subject via way color connector-color drawing arrow draw-arrow;
+		else if start-x and start-y to end-x and end-y forms a straight diagonal:
+			append svg line from start-x and start-y to end-x and end-y color connector-color;
+		else:
+			let edge-out be the map facing edge from subject to dest;
+			let edge-in be the map facing edge from dest to subject;
+			let dist be the bezier span of start-x and start-y to end-x and end-y;
+			let control1-x be the bezier assister x of subject for edge-out span dist;
+			let control1-y be the bezier assister y of subject for edge-out span dist;
+			let control2-x be the bezier assister x of dest for edge-in span dist;
+			let control2-y be the bezier assister y of dest for edge-in span dist;
+			append svg cubic from start-x and start-y via control1-x and control1-y and control2-x and control2-y to end-x and end-y color connector-color;
 		unless the room back from dest is subject:
-			let tip be the map facing edge from subject to dest;
-			append the arrow svg at end-x and end-y for tip in connector-color.
+			if mid-count is 0:
+				let tip be the map facing edge from subject to dest;
+				append the arrow svg at end-x and end-y for tip in connector-color.
 
 Include (-
 Global AM_ovminx;
@@ -1591,7 +1890,7 @@ To build automap stub connector svg from (subject - a room) for (way - a directi
 	let min-y be the automap overlay min y;
 	let max-x be the automap overlay max x;
 	let max-y be the automap overlay max y;
-	append svg open viewBox min-x (min-x - 4) min-y (min-y - 4) width (max-x - min-x + 8) height (max-y - min-y + 8);
+	append svg open viewBox min-x (min-x - AM connector view pad) min-y (min-y - AM connector view pad) width (max-x - min-x + AM connector view pad + AM connector view pad) height (max-y - min-y + AM connector view pad + AM connector view pad);
 	append the automap connector primitives from subject for way of kind AM connector kind stub;
 	append svg lit "</svg>".
 
@@ -1618,18 +1917,22 @@ To finish automap compass connector svg from (subject - a room) for (way - a dir
 	let start-y be the port y of subject for way-facing;
 	let end-x be the port x of dest for back-facing;
 	let end-y be the port y of dest for back-facing;
-	let dist be the bezier span of start-x and start-y to end-x and end-y;
-	let control1-x be the bezier assister x of subject for way-facing span dist;
-	let control1-y be the bezier assister y of subject for way-facing span dist;
-	let control2-x be the bezier assister x of dest for back-facing span dist;
-	let control2-y be the bezier assister y of dest for back-facing span dist;
-	extend automap overlay bounds with x control1-x and y control1-y;
-	extend automap overlay bounds with x control2-x and y control2-y;
+	let mid-count be the automap connector midpoint count from subject via way;
+	if mid-count > 0:
+		extend automap overlay bounds with bent connector midpoints from subject via way;
+	else unless start-x and start-y to end-x and end-y forms a straight diagonal:
+		let dist be the bezier span of start-x and start-y to end-x and end-y;
+		let control1-x be the bezier assister x of subject for way-facing span dist;
+		let control1-y be the bezier assister y of subject for way-facing span dist;
+		let control2-x be the bezier assister x of dest for back-facing span dist;
+		let control2-y be the bezier assister y of dest for back-facing span dist;
+		extend automap overlay bounds with x control1-x and y control1-y;
+		extend automap overlay bounds with x control2-x and y control2-y;
 	let min-x be the automap overlay min x;
 	let min-y be the automap overlay min y;
 	let max-x be the automap overlay max x;
 	let max-y be the automap overlay max y;
-	append svg open viewBox min-x (min-x - 4) min-y (min-y - 4) width (max-x - min-x + 8) height (max-y - min-y + 8);
+	append svg open viewBox min-x (min-x - AM connector view pad) min-y (min-y - AM connector view pad) width (max-x - min-x + AM connector view pad + AM connector view pad) height (max-y - min-y + AM connector view pad + AM connector view pad);
 	append the automap connector primitives from subject for way of kind AM connector kind compass link;
 	append svg lit "</svg>".
 
@@ -1648,11 +1951,24 @@ To build automap badge connector svg from (subject - a room) for (way - a direct
 	let end-y be the arrival badge y on dest facing subject for back;
 	extend automap overlay bounds with x start-x and y start-y;
 	extend automap overlay bounds with x end-x and y end-y;
+	let mid-count be the automap connector midpoint count from subject via way;
+	if mid-count > 0:
+		extend automap overlay bounds with bent connector midpoints from subject via way;
+	else unless start-x and start-y to end-x and end-y forms a straight diagonal:
+		let edge-out be the map facing edge from subject to dest;
+		let edge-in be the map facing edge from dest to subject;
+		let dist be the bezier span of start-x and start-y to end-x and end-y;
+		let control1-x be the bezier assister x of subject for edge-out span dist;
+		let control1-y be the bezier assister y of subject for edge-out span dist;
+		let control2-x be the bezier assister x of dest for edge-in span dist;
+		let control2-y be the bezier assister y of dest for edge-in span dist;
+		extend automap overlay bounds with x control1-x and y control1-y;
+		extend automap overlay bounds with x control2-x and y control2-y;
 	let min-x be the automap overlay min x;
 	let min-y be the automap overlay min y;
 	let max-x be the automap overlay max x;
 	let max-y be the automap overlay max y;
-	append svg open viewBox min-x (min-x - 4) min-y (min-y - 4) width (max-x - min-x + 8) height (max-y - min-y + 8);
+	append svg open viewBox min-x (min-x - AM connector view pad) min-y (min-y - AM connector view pad) width (max-x - min-x + AM connector view pad + AM connector view pad) height (max-y - min-y + AM connector view pad + AM connector view pad);
 	append the automap connector primitives from subject for way of kind AM connector kind badge link;
 	append svg lit "</svg>".
 
@@ -1661,10 +1977,10 @@ To install automap connector overlay at dense (dense-room-id - a number) way (wa
 	let min-y be the automap overlay min y;
 	let max-x be the automap overlay max x;
 	let max-y be the automap overlay max y;
-	let view-left be min-x - 4;
-	let view-top be min-y - 4;
-	let view-width be max-x - min-x + 8;
-	let view-height be max-y - min-y + 8;
+	let view-left be min-x - AM connector view pad;
+	let view-top be min-y - AM connector view pad;
+	let view-width be max-x - min-x + AM connector view pad + AM connector view pad;
+	let view-height be max-y - min-y + AM connector view pad + AM connector view pad;
 	let draw-left be view-left - the automap view origin x;
 	let draw-top be view-top - the automap view origin y;
 	let overlay-id be the map svg overlay of length (the automap svg buffer length) at left draw-left top draw-top width view-width height view-height z-index 1;
@@ -1723,19 +2039,21 @@ To sync automap exits for (subject - a room):
 		if live-badge is not drawn-badge:
 			install the automap badge from subject for way;
 
-To update the automap incrementally:
+To refresh the automap incrementally:
 	unless glk mapping is supported, stop;
 	unless automap enabled is true, stop;
 	if automap hyperlinks enabled is not automap hyperlinks last painted:
 		mark the automap full rebuild needed because "hyperlinks toggled";
 	sync the automap page from the location;
+	gather newly visited automap previous locations;
+	note automap previous location the location;
+	sync the automap z from previous locations;
 	update automap named rooms quietly;
 	rebuild the automap palette;
 	let force-all be false;
 	if automap full rebuild needed is true or automap base map ready is false:
 		now force-all is true;
 	ensure the automap view geometry is ready;
-	let prev be the automap previous location;
 	let focus-left be the map pixel x of the location - the automap view origin x;
 	let focus-top be the map pixel y of the location - the automap view origin y;
 	let focus-width be the map pixel width of the location;
@@ -1759,6 +2077,8 @@ To update the automap incrementally:
 				now subject is not automap-drawn-here;
 				if subject is the location:
 					now subject is automap-drawn-here;
+		repeat with subject running through rooms:
+			if subject is map-visible:
 				install the automap room overlay for subject;
 		repeat with subject running through rooms:
 			let dense-room-id be the automap dense room id of subject;
@@ -1770,27 +2090,27 @@ To update the automap incrementally:
 		now automap full rebuild needed is false;
 		now automap hyperlinks last painted is automap hyperlinks enabled;
 	else:
-		[Sync current room and previous drawn room. Room SVG only when appearance
-		 drifted; exit sync diffs live vs drawn and no-ops when unchanged.]
-		if the location has a stale automap appearance or the automap overlay id of the location < 1:
-			discover the automap appearance of the location;
-			install the automap room overlay for the location;
-		if prev is a room and prev is not the location:
-			if prev has a stale automap appearance or the automap overlay id of prev < 1:
-				discover the automap appearance of prev;
-				install the automap room overlay for prev;
-		sync automap exits for the location;
-		if prev is a room and prev is not the location:
-			sync automap exits for prev;
+		[Sync current room first, then other queued previous rooms (multi-hop / teleport).]
+		if the location is a room:
+			if the location has a stale automap appearance or the automap overlay id of the location < 1:
+				discover the automap appearance of the location;
+				install the automap room overlay for the location;
+			sync automap exits for the location;
+		repeat with subject running through the automap previous locations:
+			if subject is a room and subject is not the location:
+				if subject has a stale automap appearance or the automap overlay id of subject < 1:
+					discover the automap appearance of subject;
+					install the automap room overlay for subject;
+				sync automap exits for subject;
 		if focus-width > 0 and focus-height > 0:
 			set map focus left focus-left top focus-top width focus-width height focus-height;
 	clear map hyperlinks;
-	now the automap previous location is the location;
+	reset automap previous locations to the current room;
 	request map events.
 
 To refresh the automap:
 	mark the automap full rebuild needed because "author";
-	update the automap incrementally.
+	refresh the automap incrementally.
 
 
 Part - Player surface
@@ -1840,19 +2160,21 @@ A map user hide rule (this is the automap user hide rule):
 	cancel map events;
 	say "[bracket]Map hidden. Type MAP to show it again.[close bracket][paragraph break]".
 
+After looking for the first time (this is the automap opening hint rule):
+	if automap opening hint enabled is true and glk mapping is supported and automap enabled is true:
+		unless the map is visible:
+			say "[bracket]To open the map, type MAP.[close bracket][paragraph break]".
+
 Carry out going when the actor is the player (this is the mark automap rooms visited on going rule):
 	[Fog-of-war needs the room we leave as well as the destination. Logs (vis=1
 	 after Hub→North) showed the origin vanishing when it was never marked visited.]
 	let origin be the room gone from;
 	let dest be the room gone to;
-	if origin is a room and origin is on the automap:
-		now origin is visited;
-		if origin is not dark:
-			now origin is map-named;
-	if dest is a room and dest is on the automap:
-		now dest is visited;
-		if dest is not dark:
-			now dest is map-named;
+	if origin is a room:
+		reveal origin on the automap;
+	if dest is a room:
+		reveal dest on the automap.
+
 [Keep map-named in sync for the current room only (discover-on-visit).]
 To update automap named rooms quietly:
 	if the location is visited and the location is not dark:
@@ -1864,13 +2186,12 @@ Every turn (this is the mark lit rooms map-named rule):
 [We refresh the automap when going to ensure that if you enter a room X and then teleport to room Y in the same turn, X will be refreshed as well as Y.]
 Report going when the actor is the player (this is the refresh automap after going rule):
 	if automap enabled is true and glk mapping is supported:
-		update the automap incrementally.
+		refresh the automap incrementally.
 
 Every turn when automap enabled is true and glk mapping is supported (this is the refresh automap every turn rule):
-	update the automap incrementally.
+	refresh the automap incrementally.
 
-A first when play begins rule (this is the apply automap geometry table rule):
-	apply the automap geometry table;
+A first when play begins rule (this is the apply automap bearings table rule):
 	apply the automap bearings table;
 	if the location has automap geometry:
 		now the automap page id is the map page id of the location;
@@ -1881,8 +2202,7 @@ A first when play begins rule (this is the apply automap geometry table rule):
 
 When play begins (this is the initial automap rule):
 	if glk mapping is supported:
-		now the location is visited;
-		now the location is map-named;
+		reveal the location on the automap;
 		refresh the automap.
 
 [Glk windows survive undo/restore/restart; game state (dirty, caches, enabled)
@@ -1897,6 +2217,14 @@ A glulx object-updating rule (this is the refresh automap after recovering rule)
 		else:
 			close the map;
 			cancel map events.
+
+[Forced arrange after autorestore is our hook to re-present the map.]
+A first glulx input handling rule for an arrange-event (this is the resync automap after arrange rule):
+	if glk mapping is supported and automap enabled is true:
+		unless the map is visible:
+			now automap base map ready is false;
+			mark the automap full rebuild needed because "arrange";
+			refresh the automap incrementally.
 
 
 Automap ends here.
@@ -1917,14 +2245,26 @@ Section: Quick start
 
 	Include Glk Mapping by Dan Fabulich.
 	Include Automap by Dan Fabulich.
-	Include Automap Geometry by Dan Fabulich.   [optional generated table]
 
-You must declare map geometry on each room:
+To show rooms on the map, you must declare map coordinates on each room:
 
 	The map x of Kitchen is 0. The map y of Kitchen is 0.
-	The map width of Kitchen is 6. The map height of Kitchen is 4.
 
-The units of x, y, width and height are abstract grid units, not pixels.
+The units of x and y are abstract grid units, not pixels.
+
+You can also set a width and height. (The default is 6 wide by 4 tall.)
+
+	The map width of Kitchen is 8. The map height of Kitchen is 6.
+
+Optionally assign a map z (default 0). Rooms whose map z differs from the
+player's current room are drawn dimmed:
+
+	The map z of Attic is 1.
+	The map z of Sky is 1.
+
+Rooms that have no x/y or 0 width/height will not appear on the map.
+In that case, when the user enters those rooms, there will be no "you are
+here" marker on the map.
 
 Section: Map pages
 
@@ -1940,18 +2280,6 @@ page ID. In this example, in the Kitchen, you'll see the Kitchen and the
 Living Room, but not the Basement or the Secret Room. In the Basement,
 you'll see the Basement and the Secret Room, but not the Kitchen or the
 Living Room.
-
-Section: Table of Automap Geometry
-
-It can be very verbose assigning x, y, width, height, and page IDs for
-each room. Automap supports a "Table of Automap Geometry" with five columns:
-
-	Table of Automap Geometry (continued)
-    geo-room	map-x	map-y	map-w	map-h	page-id
-	Kitchen	0	0	6	4	0
-	Living Room 8	0	6	4	0
-	Basement	0	0	6	4	1
-	SecretRoom 8	0	6	4	1
 
 Section: Directions and bearings
 
@@ -1969,84 +2297,99 @@ nautical directions or other remapped directions. We can only create
 reverse map links when a direction's opposite is already defined; Automap
 defines those opposites.
 
+Section: Bent connectors
+
+By default, connectors at 90º or 45º are drawn as straight lines; all
+other connectors are drawn as curves.
+
+To author an explicit curved bent connector, use:
+
+	bend the automap connector from the Kitchen via south through 48 and 30 and 48 and 42.
+
+Coordinates are map units, like map x and map y (not pixels). Each pair is one
+waypoint in order from the source room toward the destination.
+
+Up to four waypoints per phrase; calling the phrase again replaces any
+previous bend on that exit.
+
+Section: Room Hyperlinks
+
+You can enable hyperlinks on rooms by setting "automap hyperlinks enabled".
+When that happens, the rooms become clickable on the map, and we invoke
+an "automap room hyperlink rule" when the user clicks on a room.
+
+If you use "Approaches" by Emily Short, you can add a "go to ROOM NAME"
+command to your game, which is a nice convenience, and then you can
+implement an automap room hyperlink rule like this:
+
+	An automap room hyperlink rule for a room (called target):
+		if target is the location:
+			set the automap hyperlink command to look;
+		otherwise:
+			set the automap hyperlink command to go to target;
+		rule succeeds.
+
+Section: Revealing rooms
+
+Automap shows rooms the player has visited. To show a room without
+having the player visit it:
+
+	reveal the Kitchen on the automap.
+
+To reveal every room on the current map page:
+
+	reveal all rooms on the automap.
+
+Only rooms with map geometry on the current map page are affected.
+
+If you move the player through rooms (including silent teleports), Automap
+picks those up as previous locations for the turn. You do not need to
+manually reveal rooms the player actually enters.
+
 Section: Refreshing the automap
 
-By default, the automap updates incrementally, only refreshing the label
-and exits for the current room and the previous room.
+By default, the automap updates incrementally, refreshing the label and
+exits for the current room and any previous rooms this turn. (Normally,
+there's only one previous room, but there may be more if the player
+silently moves through several rooms.)
 
 To refresh the entire automap, use "refresh the automap." (This scans all
 rooms, which can be slow.)
 
-Section: Public API — enable, show, and hyperlinks
+You can also "refresh the automap incrementally." Normally, you don't
+need to do this, because Automap will do it automatically on every turn,
+but if you reveal rooms or move the player with an "out of world" action,
+you may need to explicitly "refresh the automap incrementally" to ensure
+the incremental refresh happens.
 
-Global switches:
+Section: Showing and hiding the automap
 
-	automap enabled — true by default; MAP rebuilds, hide turns it off
-	automap hyperlinks enabled — false by default; true enables click regions
-		on visible room overlays
+The automap is enabled by default, but it may not be visible by default.
+Some interpreters don't show the map by default (e.g. on mobile, where the
+map displays full screen and would takeover the entire game experience).
+Also, if the user closes the map, the interpreter may remember the user's
+preference, and may not open the map again, even if the player restarts the
+game.
 
-Built-in command: MAP / automap (out of world).
+The user can use the "MAP" command to open the map, which will "show the
+map at user request," opening the map even if the user intentionally
+closed it.
 
-Phrases:
+After the first look, if the map is still hidden, Automap prints:
 
-	refresh the automap
-	show the map at user request
+	[To open the map, type MAP.]
 
-Use "show the map at user request" when the player explicitly asked for the map (MAP
-command).
+To suppress that hint:
 
-When automap hyperlinks enabled is true, visible room overlays are clickable.
-Define behavior in automap room hyperlink rules — set glulx replacement command
-(or use set the automap hyperlink command to look / go to …). Automap does not
-route; wire clicks to your navigation (e.g. Approaches go to [room]).
+	When play begins: now automap opening hint enabled is false.
 
-Do not call Glk Mapping overlay or polygon-hyperlink APIs from game code when
-using Automap; Automap owns the map.
+If you do disable the automap opening hint, it's a good idea to provide
+the hint in some other way. Perhaps you could prompt users to type
+"HELP", and mention the "MAP" command there.
 
-Section: Public API — fog of war and discovery
+If the user closes the map, Automap will automatically print a hint,
+like this: "[Map hidden. Type MAP to show it again.]"
 
-Automatic: on going, mapped rooms are marked visited; lit rooms become
-map-named. Dark rooms keep the normal room fill/label and show an ink
-triangle in the upper-right corner (Trizbort-style). Unnamed dark rooms
-still label as "Darkness".
+You can also set automap enabled to false to disable the map entirely.
 
-Author-facing:
-
-	map-named (property on rooms) — room label is the printed name, not "Darkness"
-	discover the automap appearance of (subject)
-	discover all visible automap rooms — e.g. debug reveal of the whole page
-	update automap named rooms quietly — sync map-named for the location
-
-Section: Internal — do not use
-
-The following are implementation details, not a supported author API.
-
-update the automap incrementally — cheap sync used by going/every-turn rules.
-mark the automap full rebuild needed — schedules full rebuild on next incremental pass.
-map hyperlink command rules — Automap registers dense-id dispatch; games use
-	automap room hyperlink rules instead.
-automap room at dense index — O(1) room lookup from overlay link id.
-
-Overlay and index state: automap overlay id, automap dense room id,
-automap connector/badge overlay at dense…, connector kind/peer indexes,
-automap-drawn-dark/named/here, automap-discovered.
-
-Render pipeline: sync the automap base (dense ids, viewBox, blank present),
-rebuild the automap palette, install the automap room/connector/badge
-overlay…, append svg…, clear map hyperlinks.
-
-Low-level geometry: port x/y, badge x/y, bezier assister, map facing edge,
-live automap connector kind, and related phrases in the Layout part.
-
-
-Section: What the player sees
-
-Only map-visible rooms are drawn. Unvisited mapped neighbors appear as stub
-arrows. The current room uses a stronger here palette and thicker stroke. Dark
-rooms keep the normal card colors and show a small ink triangle in the
-upper-right corner. Up, down, inside, and outside use small badge discs (when
-not duplicated by a compass link between the same rooms). Colors follow
-Spatterlight paper/ink shades when the runner supports glk_style_measure. The
-host focus rectangle zooms to the current room; the SVG viewBox covers the
-active page.
 

@@ -816,7 +816,8 @@ To say post-restore routine:
 			[Do not open the Flexible Windows graphics pane; Glk Mapping owns the map.]
 			if the graphics window is g-present:
 				close the graphics window;
-			show the map at user request;
+			unless identification is happening:
+				prepare the glk automap with room hyperlinks;
 		else if glulx graphics is supported:
 			now current graphics drawing rule is the compass-drawing rule;
 			unless the measuring window is g-present:
